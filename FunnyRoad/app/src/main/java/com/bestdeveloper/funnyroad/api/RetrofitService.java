@@ -29,7 +29,7 @@ public class RetrofitService {
     public interface SnappingPointsService {
         @GET("snapToRoads")
         Call<SnappedPointResult> getSnappedPoints(@Query("interpolate") boolean interpolation,
-                                                  @Query("path") String location,
+                                                  @Query("path") String path,
                                                   @Query("key") String apiKey );
     }
 }

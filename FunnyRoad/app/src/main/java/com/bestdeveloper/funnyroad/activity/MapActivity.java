@@ -77,7 +77,7 @@ public class MapActivity extends AppCompatActivity
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pointsGenerator = new RoadGenerator(map, lastKnownLocation, 2000);
+                pointsGenerator = new RoadGenerator(getApplication(), map, lastKnownLocation, 300);
                 pointsGenerator.generateRoute();
 
             }

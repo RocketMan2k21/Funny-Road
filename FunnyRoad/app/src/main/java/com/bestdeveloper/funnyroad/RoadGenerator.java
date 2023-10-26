@@ -1,21 +1,31 @@
 package com.bestdeveloper.funnyroad;
 
+import android.app.Application;
 import android.location.Location;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.bestdeveloper.funnyroad.api.RetrofitService;
 import com.bestdeveloper.funnyroad.db.Repository;
-import com.bestdeveloper.funnyroad.model.SnappedPoint;
+import com.bestdeveloper.funnyroad.model.SnappedPointResult;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RoadGenerator {
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
+public class RoadGenerator {
+    private Application application;
     private GoogleMap mMap;
 
     private Location currentLocation;
@@ -25,48 +35,53 @@ public class RoadGenerator {
 
     private Circle circle;
 
-    private List<SnappedPoint> snappedPoints;
+    private List<LatLng> snappedPoints = new ArrayList<>();
 
-    public RoadGenerator(GoogleMap map, Location currentLocation, int distanceInMeters) {
+    public RoadGenerator(Application application, GoogleMap map, Location currentLocation, int distanceInMeters) {
         this.mMap = map;
         this.currentLocation = currentLocation;
         this.distanceInMeters = distanceInMeters/2;
+        this.application = application;
+
     }
 
     // Generates a circle and markers on it
     public void generateRoute(){
 
-        CircleOptions circleOptions = new CircleOptions()
-                .center(calculateNewCoordinates(currentLocation.getLatitude(),
-                        currentLocation.getLongitude(), distanceInMeters/1000, 180))
-                .radius(distanceInMeters)
-                .fillColor(R.color.black);
+        final LatLng circleCenter = calculateNewCoordinates(
+                currentLocation.getLatitude(),
+                currentLocation.getLongitude(),
+                distanceInMeters,
+                -90
 
-        circle = mMap.addCircle(circleOptions);
+        );
+
+        final double circleRadius = distanceInMeters;
+
         Log.i("LOC", currentLocation.getLatitude() + ", " + currentLocation.getLongitude());
 
-        List<LatLng> pointsToSnap = getPointsOnCircumference(circle.getRadius(), circle.getCenter(), 5);
+        List<LatLng> pointsToSnap = getPointsOnCircumference(circleRadius, currentLocation, circleCenter, 50);
+        snapPoints(String.join("|", toPath(pointsToSnap)));
 
-        pointsToSnap = new Repository().getSnappedPoints(String.join(":", pointsToPath(pointsToSnap)));
 
 
     }
 
-    private String[] pointsToPath(List<LatLng> pointsToSnap) {
-        String[] path = new String[pointsToSnap.size()*2];
+    private String[] toPath(List<LatLng> pointsToSnap) {
+        String[] path = new String[pointsToSnap.size()];
 
         for(LatLng coord: pointsToSnap){
             int index = pointsToSnap.indexOf(coord);
-            path[index] = String.valueOf(coord.latitude);
-            path[++index] = String.valueOf(coord.longitude);
+            path[index] = String.valueOf(coord.latitude) + ',' + coord.longitude;
         }
 
         return path;
     }
 
     // calcute centre of circle in given distance away from current user location
-    private LatLng calculateNewCoordinates(double lat, double lon, double distanceKm, double bearingDegrees) {
+    private LatLng calculateNewCoordinates(double lat, double lon, double distanceInMeters, double bearingDegrees) {
 
+        final double distanceKm = distanceInMeters/1000;
         final double  earthRadiusKm = 6371; // Radius of the Earth in kilometers
 
         // Convert latitude and longitude from degrees to radians
@@ -93,29 +108,62 @@ public class RoadGenerator {
 
     }
 
-    private List<LatLng> getPointsOnCircumference(final double radius, final LatLng center, int numOfPoints){
-
+    private List<LatLng> getPointsOnCircumference(final double radiusInMeters, final Location currentLocation, final LatLng center, int numOfPoints){
+        final LatLng currentLocationPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
         double slice = 360 / numOfPoints;
-        ArrayList<LatLng> lngArrayList = new ArrayList<>();
+        List<LatLng> lngArrayList = new ArrayList<>();
 
-        Log.i("CNT", center.latitude + ":" + center.longitude);
-
+        lngArrayList.add(currentLocationPoint);
         for (int i = 0; i < numOfPoints; i++)
         {
             double angle = slice * i;
 
-            lngArrayList.add(calculateNewCoordinates(center.latitude, center.longitude, radius/1000, angle));
+            lngArrayList.add(calculateNewCoordinates(center.latitude, center.longitude, radiusInMeters, angle));
 
-            mMap.addMarker(new MarkerOptions().position(lngArrayList.get(i))
-                    .title("Marker" + i));
+           // mMap.addMarker(new MarkerOptions().position(lngArrayList.get(i)));
 
-            Log.i("CRL", "point " + (i + 1) + lngArrayList.get(i).latitude + "," + lngArrayList.get(i).longitude);
         }
-
+        lngArrayList.add(currentLocationPoint);
         return lngArrayList;
 
     }
 
 
+    public void snapPoints(String path){
+        RetrofitService.SnappingPointsService snappingPointsService = RetrofitService.getSnappingPointsService();
+
+        Call<SnappedPointResult> call = snappingPointsService.getSnappedPoints(true, path, BuildConfig.MAPS_API_KEY);
+
+        call.enqueue(new Callback<SnappedPointResult>() {
+            @Override
+            public void onResponse(@NonNull Call<SnappedPointResult> call, @NonNull Response<SnappedPointResult> response) {
+                SnappedPointResult result = response.body();
+                if(result != null && result.getSnappedPoints() != null ){
+                    Log.i("REP", "Response successful");
+                    result.getSnappedPoints().forEach(snappedPoint -> snappedPoints.add(new LatLng(
+                            snappedPoint.getLocation().getLatitude(),
+                            snappedPoint.getLocation().getLongitude())));
+                    showRoad(snappedPoints);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<SnappedPointResult> call, @NonNull Throwable t) {
+                Log.e("REP", "Retrofit: failure response" );
+            }
+        });
+
+    }
+
+
+    public void showRoad(List<LatLng> snappedPoints){
+        PolylineOptions rectOption = new PolylineOptions();
+
+        for(LatLng point: snappedPoints){
+            rectOption.add(point);
+            mMap.addMarker(new MarkerOptions().position(point));
+        }
+         mMap.addPolyline(rectOption);
+    }
 
 }
