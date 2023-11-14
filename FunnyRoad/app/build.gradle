@@ -8,6 +8,10 @@ android {
     namespace 'com.bestdeveloper.funnyroad'
     compileSdk 33
 
+    buildFeatures{
+        dataBinding true;
+    }
+
     defaultConfig {
         applicationId "com.bestdeveloper.funnyroad"
         minSdk 24
