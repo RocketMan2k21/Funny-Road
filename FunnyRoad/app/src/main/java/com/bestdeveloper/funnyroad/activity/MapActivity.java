@@ -4,12 +4,9 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -59,9 +56,6 @@ public class MapActivity extends AppCompatActivity
     private static final int DEFAULT_ZOOM = 15;
     private LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
 
-    EditText inputDistance;
-    TextView routeDistance;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,9 +64,6 @@ public class MapActivity extends AppCompatActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        inputDistance = findViewById(R.id.userDistance);
-        routeDistance = findViewById(R.id.resultDistance);
 
         // Construct a PlacesClient
         Places.initialize(getApplicationContext(), BuildConfig.MAPS_API_KEY);
@@ -86,12 +77,14 @@ public class MapActivity extends AppCompatActivity
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    pointsGenerator = new RoadGenerator(getApplication(), map, lastKnownLocation, Integer.valueOf(inputDistance.getText().toString()));
-                    pointsGenerator.generateRoute();
-                    routeDistance.setText(String.valueOf(pointsGenerator.getRouteDistance()));
+                pointsGenerator = new RoadGenerator(getApplication(), map, lastKnownLocation, 300);
+                pointsGenerator.generateRoute();
 
             }
         });
+
+
+
 
     }
 
