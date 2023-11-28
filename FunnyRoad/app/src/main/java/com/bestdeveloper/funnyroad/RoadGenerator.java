@@ -3,6 +3,7 @@ package com.bestdeveloper.funnyroad;
 import android.app.Application;
 import android.location.Location;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -25,6 +26,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class RoadGenerator {
+    public static final double R = 6371e3;
     private Application application;
     private GoogleMap mMap;
 
@@ -33,7 +35,8 @@ public class RoadGenerator {
     // User distance
     private int distanceInMeters;
 
-    private Circle circle;
+    private double routeDist;
+    private double circleRadius;
 
     private List<LatLng> snappedPoints = new ArrayList<>();
 
@@ -48,22 +51,38 @@ public class RoadGenerator {
     // Generates a circle and markers on it
     public void generateRoute(){
 
+        circleRadius = 200;
+
         final LatLng circleCenter = calculateNewCoordinates(
                 currentLocation.getLatitude(),
                 currentLocation.getLongitude(),
-                distanceInMeters,
-                -90
+                0,
+                0
 
         );
 
-        final double circleRadius = distanceInMeters;
 
-        Log.i("LOC", currentLocation.getLatitude() + ", " + currentLocation.getLongitude());
+        double routeBias = 0.1;
 
-        List<LatLng> pointsToSnap = getPointsOnCircumference(circleRadius, currentLocation, circleCenter, 50);
-        snapPoints(String.join("|", toPath(pointsToSnap)));
+        generateAndSnapPoints(routeBias, circleCenter);
 
+    }
 
+    private void generateAndSnapPoints(double routeBias, LatLng circleCenter){
+        do {
+            List<LatLng> pointsToSnap = getPointsOnCircumference(circleRadius, currentLocation, circleCenter, 50);
+            snapPoints(String.join("|", toPath(pointsToSnap)), new SnappingPointCallback() {
+                @Override
+                public void SnappingPointCallback() {
+                    showRoad(snappedPoints);
+                    routeDist = calculateRouteDistance();
+                    Toast.makeText(application.getApplicationContext(), "Distance: " + routeDist
+                            , Toast.LENGTH_SHORT).show();
+                    circleRadius += 50;
+                }
+            });
+
+        }while(routeDist < distanceInMeters );
 
     }
 
@@ -113,7 +132,7 @@ public class RoadGenerator {
         double slice = 360 / numOfPoints;
         List<LatLng> lngArrayList = new ArrayList<>();
 
-        lngArrayList.add(currentLocationPoint);
+        //lngArrayList.add(currentLocationPoint);
         for (int i = 0; i < numOfPoints; i++)
         {
             double angle = slice * i;
@@ -123,13 +142,13 @@ public class RoadGenerator {
            // mMap.addMarker(new MarkerOptions().position(lngArrayList.get(i)));
 
         }
-        lngArrayList.add(currentLocationPoint);
+       // lngArrayList.add(currentLocationPoint);
         return lngArrayList;
 
     }
 
 
-    public void snapPoints(String path){
+    public void snapPoints(String path, SnappingPointCallback  callback){
         RetrofitService.SnappingPointsService snappingPointsService = RetrofitService.getSnappingPointsService();
 
         Call<SnappedPointResult> call = snappingPointsService.getSnappedPoints(true, path, BuildConfig.MAPS_API_KEY);
@@ -143,7 +162,8 @@ public class RoadGenerator {
                     result.getSnappedPoints().forEach(snappedPoint -> snappedPoints.add(new LatLng(
                             snappedPoint.getLocation().getLatitude(),
                             snappedPoint.getLocation().getLongitude())));
-                    showRoad(snappedPoints);
+                    callback.SnappingPointCallback();
+
                 }
             }
 
@@ -161,9 +181,34 @@ public class RoadGenerator {
 
         for(LatLng point: snappedPoints){
             rectOption.add(point);
-            mMap.addMarker(new MarkerOptions().position(point));
+
         }
          mMap.addPolyline(rectOption);
+    }
+
+    public double degreesToRadians(double degrees) {
+        return degrees * Math.PI / 180;
+    }
+    public double calculateRouteDistance() {
+        double distance = 0;
+        if(!snappedPoints.isEmpty())
+            for(int i = 0; i < snappedPoints.size()-1; i++){
+                double lat1 = snappedPoints.get(i).latitude;
+                double lon1 = snappedPoints.get(i).longitude;
+                double lat2 = snappedPoints.get(i+1).latitude;
+                double lon2 = snappedPoints.get(i+1).longitude;
+                double φ1 = degreesToRadians(lat1);
+                double φ2 = degreesToRadians(lat2);
+                double Δφ = degreesToRadians(lat2 - lat1);
+                double Δλ = degreesToRadians(lon2 - lon1);
+                double a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                        Math.cos(φ1) * Math.cos(φ2) *
+                                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+                double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                distance += R * c;
+            }
+        Log.i("RoadGenerator", "route distance in meters: " + distance);
+        return distance;
     }
 
 }
