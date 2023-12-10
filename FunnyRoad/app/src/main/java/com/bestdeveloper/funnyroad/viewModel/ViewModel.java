@@ -7,11 +7,15 @@ import androidx.lifecycle.LiveData;
 
 import com.bestdeveloper.funnyroad.db.Repository;
 import com.bestdeveloper.funnyroad.model.SnappedPoint;
+import com.google.android.gms.maps.GoogleMap;
 
 import java.util.List;
 
 public class ViewModel extends AndroidViewModel {
     private Repository repository;
+    private LiveData<GoogleMap> mapLiveData;
+
+
 
     public ViewModel(Application application){
         super(application);

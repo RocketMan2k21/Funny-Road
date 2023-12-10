@@ -3,7 +3,9 @@ package com.bestdeveloper.funnyroad.activity;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,10 +25,15 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.net.PlacesClient;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MapActivity extends AppCompatActivity
     implements OnMapReadyCallback {
@@ -34,6 +41,7 @@ public class MapActivity extends AppCompatActivity
     private static final String TAG = MapActivity.class.getSimpleName();
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+    private final String SNAPPED_POINTS_KEY = "ready_points";
 
 
     // Map object
@@ -77,7 +85,7 @@ public class MapActivity extends AppCompatActivity
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pointsGenerator = new RoadGenerator(getApplication(), map, lastKnownLocation, 1000);
+                pointsGenerator = new RoadGenerator(getApplication(), map, lastKnownLocation, 5000);
                 pointsGenerator.generateRoute();
 
             }
@@ -193,5 +201,28 @@ public class MapActivity extends AppCompatActivity
 
     }
 
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PolylineOptions parcelable = savedInstanceState.getParcelable(SNAPPED_POINTS_KEY, PolylineOptions.class);
+            if(parcelable != null) {
+                pointsGenerator.setPolylineOptions(parcelable);
+                pointsGenerator.showRoad();
+                Log.i(TAG, "Polyline bundled successfully");
+            }
+            else{
+                Log.i(TAG, "Impossible to get a Polyline from saved State, parcelable is NULL");
+            }
+        }
+    }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        if(pointsGenerator != null) {
+            PolylineOptions rectOption = pointsGenerator.getRectOption();
+            if (rectOption != null)
+                outState.putParcelable(SNAPPED_POINTS_KEY, rectOption);
+        }
+        super.onSaveInstanceState(outState);
+    }
 }
