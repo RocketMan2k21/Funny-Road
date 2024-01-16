@@ -1,6 +1,11 @@
 package com.bestdeveloper.funnyroad.model;
 
-public class Ride {
+import android.widget.BaseAdapter;
+
+import androidx.databinding.BaseObservable;
+import androidx.databinding.Bindable;
+
+public class Ride extends BaseObservable {
     private String rideID;
     private String rideName;
     private double duration;

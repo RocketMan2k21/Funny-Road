@@ -3,21 +3,24 @@ package com.bestdeveloper.funnyroad.activity;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bestdeveloper.funnyroad.BuildConfig;
-import com.bestdeveloper.funnyroad.RoadGenerator;
+import com.bestdeveloper.funnyroad.RouteGenerator;
 import com.bestdeveloper.funnyroad.R;
+import com.bestdeveloper.funnyroad.viewModel.MapViewModel;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -25,15 +28,14 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.net.PlacesClient;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MapActivity extends AppCompatActivity
     implements OnMapReadyCallback {
@@ -43,6 +45,9 @@ public class MapActivity extends AppCompatActivity
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private final String SNAPPED_POINTS_KEY = "ready_points";
 
+    //View model'
+    private MapViewModel mapViewModel;
+
 
     // Map object
     private GoogleMap map;
@@ -50,8 +55,7 @@ public class MapActivity extends AppCompatActivity
 
     // Points generator to make a trip
 
-    private RoadGenerator pointsGenerator;
-
+    private RouteGenerator pointsGenerator;
 
     // the entry point to the Places API
     private PlacesClient placesClient;
@@ -64,10 +68,19 @@ public class MapActivity extends AppCompatActivity
     private static final int DEFAULT_ZOOM = 15;
     private LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
 
+
+    // UI input
+    private EditText inputDistanceEditTxt;
+
+    public MapActivity() {
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        mapViewModel = new ViewModelProvider(this).get(MapViewModel.class);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -79,21 +92,49 @@ public class MapActivity extends AppCompatActivity
 
         // Construct a FusedLocationProviderClient
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-
+        // Distance field
+        inputDistanceEditTxt = findViewById(R.id.userDist);
+        inputDistanceEditTxt.setText("500");
         Button button = findViewById(R.id.generateBtn);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pointsGenerator = new RoadGenerator(getApplication(), map, lastKnownLocation, 5000);
-                pointsGenerator.generateRoute();
-
+                Log.i(TAG, "Generator button clicked");
+                String distanceString = inputDistanceEditTxt.getText().toString();
+                if(!TextUtils.isEmpty(distanceString)) {
+                    final int distance = Integer.parseInt(distanceString);
+                    if (distance > 0){
+                        pointsGenerator.generateRoute(lastKnownLocation, distance);
+                        generateRoute(lastKnownLocation, distance);
+                    }
+                    else
+                        Toast.makeText(MapActivity.this, "Distance value is less than 1 meter", Toast.LENGTH_SHORT).show();
+                }
+                else
+                    Toast.makeText(MapActivity.this, "Distance value is not correct. Try Again!", Toast.LENGTH_SHORT).show();
             }
         });
 
+//        // Observe changes in the PolylineOptions LiveData
+//        mapViewModel.getOptionsMutableLiveData().observe(this, new Observer<PolylineOptions>() {
+//            @Override
+//            public void onChanged(PolylineOptions polylineOptions) {
+//                // Update the map with the new PolylineOptions
+//                map.clear();  // Clear existing polylines
+//                map.addPolyline(polylineOptions);
+//            }
+//        });
 
+    }
 
-
+    private void generateRoute(Location lastKnownLocation, int distance) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                pointsGenerator.generateRoute(lastKnownLocation, distance);
+            }
+        });
     }
 
     @Override
@@ -106,8 +147,7 @@ public class MapActivity extends AppCompatActivity
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
-
-
+        pointsGenerator = new RouteGenerator(getApplication(), mapViewModel ,map);
     }
 
     private void getDeviceLocation() {
@@ -201,11 +241,13 @@ public class MapActivity extends AppCompatActivity
 
     }
 
-    @Override
+    /*@Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            PolylineOptions parcelable = savedInstanceState.getParcelable(SNAPPED_POINTS_KEY, PolylineOptions.class);
-            if(parcelable != null) {
+        PolylineOptions parcelable = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            parcelable = savedInstanceState.getParcelable(SNAPPED_POINTS_KEY, PolylineOptions.class);
+        }
+        if(parcelable != null) {
                 pointsGenerator.setPolylineOptions(parcelable);
                 pointsGenerator.showRoad();
                 Log.i(TAG, "Polyline bundled successfully");
@@ -213,7 +255,7 @@ public class MapActivity extends AppCompatActivity
             else{
                 Log.i(TAG, "Impossible to get a Polyline from saved State, parcelable is NULL");
             }
-        }
+
     }
 
     @Override
@@ -224,5 +266,5 @@ public class MapActivity extends AppCompatActivity
                 outState.putParcelable(SNAPPED_POINTS_KEY, rectOption);
         }
         super.onSaveInstanceState(outState);
-    }
+    }*/
 }
