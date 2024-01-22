@@ -18,6 +18,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 import retrofit2.Call;
@@ -27,9 +29,7 @@ import retrofit2.Response;
 public class RouteGenerator {
     private static final String TAG = "RouteGenerator";
     public static final double EarthR = 6371e3;
-    private static final int INITIAL_CIRCLE_RADIUS = 200;
-    private static final int CIRCLE_RADIUS = 360;
-    private final int RADIUS_STEP_CIRCLE = 50;
+    private static final int CIRCLE_DEGREE = 360;
     private Application application;
     private GoogleMap mMap;
 
@@ -38,7 +38,7 @@ public class RouteGenerator {
     private ArrayList<LatLng> completePoints;
 
     // User distance
-    private int distanceInMeters;
+    private double distanceInMeters;
 
     private double routeDistance;
 
@@ -58,7 +58,7 @@ public class RouteGenerator {
     }
 
     // Generates a circle and markers on it
-    private void generateRouteRecursive(final double circleDegreeWalked, final int circleRadius) {
+    private void generateRouteRecursive(final double circleDegreeWalked, final double circleRadius) {
 
         if (routeDistance >= distanceInMeters) {
             if(routePoly != null) {
@@ -85,26 +85,40 @@ public class RouteGenerator {
                 // Call the next iteration with updated parameters
                 completePoints = new ArrayList<>(snappedPoints);
                 showRoad();
-                snappedPoints.clear();
-                generateRouteRecursive(circleDegreeWalked, circleRadius + RADIUS_STEP_CIRCLE);
+                Toast.makeText(application.getApplicationContext(), "Route found Dist:" + routeDistance, Toast.LENGTH_SHORT).show();
+
             }
         });
     }
 
     // Call this method to start the recursive route generation
-    public void generateRoute(Location currentLocation, int distanceInMeters) {
+    public void generateRoute(Location currentLocation, double distanceInMeters) {
         this.currentLocation = currentLocation;
         this.distanceInMeters = distanceInMeters;
         if(routePoly != null) {
+            snappedPoints.clear();
             routePoly.remove();
             routePoly = null;
             routeDistance = 0;
         }
-        generateRouteRecursive(getRandomNumber(0, CIRCLE_RADIUS), INITIAL_CIRCLE_RADIUS);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                generateRouteRecursive(getRandomNumber(0, CIRCLE_DEGREE), getCircleRadius(distanceInMeters));
+            }
+        });
+
     }
 
     private double getRandomNumber(double min, double max) {
         return ((Math.random() * (max - min)) + min);
+    }
+
+    private double getCircleRadius(final double circumference){
+        double v = circumference / (2 * Math.PI);
+        Log.v(TAG, "Calc. circle radius: " + v);
+        return v;
     }
 
 
@@ -217,28 +231,6 @@ public class RouteGenerator {
         // Set PolylineOptions in ViewModel
         mapViewModel.setOptionsMutableLiveData(polylineOptions);
     }
-
-
-/*
-
-    public void setPolylineOptions(PolylineOptions rectOption){
-        this.rectOption = rectOption;
-    }
-
-    public PolylineOptions getRectOption() {
-        return rectOption;
-    }
-
-    public List<LatLng> getSnappedPoints() {
-        return snappedPoints;
-    }
-
-    public void setSnappedPoints(List<LatLng> snappedPoints) {
-        this.snappedPoints = snappedPoints;
-        if(snappedPoints != null)
-            showRoad();
-    }
-*/
 
     public double degreesToRadians(double degrees) {
         return degrees * Math.PI / 180;

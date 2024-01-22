@@ -60,8 +60,7 @@ public class MapActivity extends AppCompatActivity
     // the entry point to the Places API
     private PlacesClient placesClient;
     private FusedLocationProviderClient fusedLocationProviderClient;
-
-
+    
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
     private Location lastKnownLocation;
@@ -94,7 +93,7 @@ public class MapActivity extends AppCompatActivity
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         // Distance field
         inputDistanceEditTxt = findViewById(R.id.userDist);
-        inputDistanceEditTxt.setText("500");
+        inputDistanceEditTxt.setText("1000");
         Button button = findViewById(R.id.generateBtn);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,7 +103,6 @@ public class MapActivity extends AppCompatActivity
                 if(!TextUtils.isEmpty(distanceString)) {
                     final int distance = Integer.parseInt(distanceString);
                     if (distance > 0){
-                        pointsGenerator.generateRoute(lastKnownLocation, distance);
                         generateRoute(lastKnownLocation, distance);
                     }
                     else
@@ -115,26 +113,11 @@ public class MapActivity extends AppCompatActivity
             }
         });
 
-//        // Observe changes in the PolylineOptions LiveData
-//        mapViewModel.getOptionsMutableLiveData().observe(this, new Observer<PolylineOptions>() {
-//            @Override
-//            public void onChanged(PolylineOptions polylineOptions) {
-//                // Update the map with the new PolylineOptions
-//                map.clear();  // Clear existing polylines
-//                map.addPolyline(polylineOptions);
-//            }
-//        });
 
     }
 
     private void generateRoute(Location lastKnownLocation, int distance) {
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                pointsGenerator.generateRoute(lastKnownLocation, distance);
-            }
-        });
+        pointsGenerator.generateRoute(lastKnownLocation, distance);
     }
 
     @Override
@@ -240,31 +223,4 @@ public class MapActivity extends AppCompatActivity
         }
 
     }
-
-    /*@Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        PolylineOptions parcelable = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            parcelable = savedInstanceState.getParcelable(SNAPPED_POINTS_KEY, PolylineOptions.class);
-        }
-        if(parcelable != null) {
-                pointsGenerator.setPolylineOptions(parcelable);
-                pointsGenerator.showRoad();
-                Log.i(TAG, "Polyline bundled successfully");
-            }
-            else{
-                Log.i(TAG, "Impossible to get a Polyline from saved State, parcelable is NULL");
-            }
-
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        if(pointsGenerator != null) {
-            PolylineOptions rectOption = pointsGenerator.getRectOption();
-            if (rectOption != null)
-                outState.putParcelable(SNAPPED_POINTS_KEY, rectOption);
-        }
-        super.onSaveInstanceState(outState);
-    }*/
 }
