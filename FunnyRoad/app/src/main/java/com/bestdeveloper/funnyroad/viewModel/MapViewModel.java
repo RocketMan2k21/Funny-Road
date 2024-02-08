@@ -6,11 +6,14 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.bestdeveloper.funnyroad.db.Repository;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import java.util.List;
 
 public class MapViewModel extends AndroidViewModel {
     private Repository repository;
-    private MutableLiveData<PolylineOptions> optionsMutableLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<LatLng>> pointsMutableLiveData = new MutableLiveData<>();
 
     public MapViewModel(Application application){
         super(application);
@@ -18,11 +21,11 @@ public class MapViewModel extends AndroidViewModel {
         repository = new Repository();
     }
 
-    public void setOptionsMutableLiveData(PolylineOptions polylineOptions) {
-        this.optionsMutableLiveData.setValue(polylineOptions);
+    public MutableLiveData<List<LatLng>> getPointsMutableLiveData() {
+        return pointsMutableLiveData;
     }
 
-    public MutableLiveData<PolylineOptions> getOptionsMutableLiveData() {
-        return optionsMutableLiveData;
+    public void setSnappedPointsLiveData(List<LatLng> snappedPoints) {
+       pointsMutableLiveData.setValue(snappedPoints);
     }
 }

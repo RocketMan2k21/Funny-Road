@@ -9,12 +9,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.bestdeveloper.funnyroad.BuildConfig;
@@ -28,11 +30,14 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,7 +48,6 @@ public class MapActivity extends AppCompatActivity
     private static final String TAG = MapActivity.class.getSimpleName();
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    private final String SNAPPED_POINTS_KEY = "ready_points";
 
     //View model'
     private MapViewModel mapViewModel;
@@ -60,7 +64,7 @@ public class MapActivity extends AppCompatActivity
     // the entry point to the Places API
     private PlacesClient placesClient;
     private FusedLocationProviderClient fusedLocationProviderClient;
-    
+
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
     private Location lastKnownLocation;
@@ -70,6 +74,7 @@ public class MapActivity extends AppCompatActivity
 
     // UI input
     private EditText inputDistanceEditTxt;
+    LinearLayout llBottomSheet;
 
     public MapActivity() {
     }
@@ -78,6 +83,10 @@ public class MapActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        // Expand the bottom sheet
+        llBottomSheet = (LinearLayout) findViewById(R.id.bottom_sheet);
+        expandTheBottomSheet();
 
         mapViewModel = new ViewModelProvider(this).get(MapViewModel.class);
 
@@ -92,9 +101,9 @@ public class MapActivity extends AppCompatActivity
         // Construct a FusedLocationProviderClient
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         // Distance field
-        inputDistanceEditTxt = findViewById(R.id.userDist);
+        inputDistanceEditTxt = findViewById(R.id.user_dist);
         inputDistanceEditTxt.setText("1000");
-        Button button = findViewById(R.id.generateBtn);
+        Button button = findViewById(R.id.generate_btn);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -104,6 +113,7 @@ public class MapActivity extends AppCompatActivity
                     final int distance = Integer.parseInt(distanceString);
                     if (distance > 0){
                         generateRoute(lastKnownLocation, distance);
+                        collapseTheBottomSheet();
                     }
                     else
                         Toast.makeText(MapActivity.this, "Distance value is less than 1 meter", Toast.LENGTH_SHORT).show();
@@ -116,6 +126,17 @@ public class MapActivity extends AppCompatActivity
 
     }
 
+    private void collapseTheBottomSheet() {
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
+    private void expandTheBottomSheet() {
+        // set option for bottom sheet - expanded
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+    }
+
     private void generateRoute(Location lastKnownLocation, int distance) {
         pointsGenerator.generateRoute(lastKnownLocation, distance);
     }
@@ -123,7 +144,6 @@ public class MapActivity extends AppCompatActivity
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.map = googleMap;
-
         getLocationPermission();
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
@@ -131,6 +151,16 @@ public class MapActivity extends AppCompatActivity
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
         pointsGenerator = new RouteGenerator(getApplication(), mapViewModel ,map);
+
+        //Check if there was an polyline
+        List<LatLng> value = mapViewModel.getPointsMutableLiveData().getValue();
+
+        if(value != null){
+            pointsGenerator.setSnappedPoints(value);
+            pointsGenerator.showRoad();
+        }
+
+
     }
 
     private void getDeviceLocation() {

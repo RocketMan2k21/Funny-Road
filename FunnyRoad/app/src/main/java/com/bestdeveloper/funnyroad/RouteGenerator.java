@@ -11,8 +11,10 @@ import androidx.core.content.ContextCompat;
 import com.bestdeveloper.funnyroad.api.RetrofitService;
 import com.bestdeveloper.funnyroad.model.SnappedPointResult;
 import com.bestdeveloper.funnyroad.viewModel.MapViewModel;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -30,12 +32,12 @@ public class RouteGenerator {
     private static final String TAG = "RouteGenerator";
     public static final double EarthR = 6371e3;
     private static final int CIRCLE_DEGREE = 360;
+    private static final int NUM_OF_POINTS_ON_CIRC = 97;
+    private static final int DEFAULT_ZOOM = 16;
     private Application application;
     private GoogleMap mMap;
 
     private Location currentLocation;
-
-    private ArrayList<LatLng> completePoints;
 
     // User distance
     private double distanceInMeters;
@@ -49,8 +51,6 @@ public class RouteGenerator {
 
     public RouteGenerator(Application application, MapViewModel mapViewModel, GoogleMap map) {
         this.mMap = map;
-        this.currentLocation = currentLocation;
-        this.distanceInMeters = distanceInMeters;
         this.application = application;
         this.mapViewModel = mapViewModel;
         rectOption.color(R.color.purple_700);
@@ -59,16 +59,6 @@ public class RouteGenerator {
 
     // Generates a circle and markers on it
     private void generateRouteRecursive(final double circleDegreeWalked, final double circleRadius) {
-
-        if (routeDistance >= distanceInMeters) {
-            if(routePoly != null) {
-                Toast.makeText(application.getApplicationContext(), "Route found Dist:" + routeDistance, Toast.LENGTH_SHORT).show();
-            }
-            else
-                Log.e(TAG, "error displaying a route");
-
-            return;  // Stop recursion when the condition is met
-        }
         Log.i(TAG, "Generation...");
         LatLng circleCenter = calculateNewCoordinates(
                 currentLocation.getLatitude(),
@@ -76,15 +66,14 @@ public class RouteGenerator {
                 circleRadius,
                 circleDegreeWalked
         );
-        List<LatLng> pointsToSnap = getPointsOnCircumference(circleRadius, currentLocation, circleCenter, 50);
+        List<LatLng> pointsToSnap = getPointsOnCircumference(circleRadius, currentLocation, circleCenter, NUM_OF_POINTS_ON_CIRC);
 
         snapPoints(String.join("|", toPath(pointsToSnap)), new SnappingPointCallback() {
             @Override
             public void SnappingPointCallback() {;
                 routeDistance = calculateRouteDistance();
-                // Call the next iteration with updated parameters
-                completePoints = new ArrayList<>(snappedPoints);
                 showRoad();
+                moveCameraToRoute(circleCenter);
                 Toast.makeText(application.getApplicationContext(), "Route found Dist:" + routeDistance, Toast.LENGTH_SHORT).show();
 
             }
@@ -95,11 +84,10 @@ public class RouteGenerator {
     public void generateRoute(Location currentLocation, double distanceInMeters) {
         this.currentLocation = currentLocation;
         this.distanceInMeters = distanceInMeters;
-        if(routePoly != null) {
+        if(!snappedPoints.isEmpty()) {
             snappedPoints.clear();
-            routePoly.remove();
-            routePoly = null;
             routeDistance = 0;
+            mMap.clear();
         }
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(new Runnable() {
@@ -166,7 +154,8 @@ public class RouteGenerator {
     private List<LatLng> getPointsOnCircumference(final double radiusInMeters, final Location currentLocation, final LatLng center, int numOfPoints){
         double slice = 360 / numOfPoints;
         List<LatLng> lngArrayList = new ArrayList<>();
-
+        LatLng startingPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+        lngArrayList.add(startingPoint);
         for (int i = 0; i < numOfPoints; i++)
         {
             double angle = slice * i;
@@ -175,11 +164,12 @@ public class RouteGenerator {
 
         }
 
-        Log.d(TAG, "points on circumference: " + lngArrayList);
+        LatLng endPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude() + 0.0000001);
+        lngArrayList.add(endPoint);
+
         return lngArrayList;
 
     }
-
 
     public void snapPoints(String path, SnappingPointCallback  callback){
         RetrofitService.SnappingPointsService snappingPointsService = RetrofitService.getSnappingPointsService();
@@ -218,18 +208,30 @@ public class RouteGenerator {
             polylineOptions.add(point);
         }
 
+        // Start/End markers
+        mMap.addMarker(new MarkerOptions().position(snappedPoints.get(0)).title("Start"));
+        mMap.addMarker(new MarkerOptions().position(snappedPoints.get(snappedPoints.size()-1)).title("Finish"));
+
+
         // Create a new polyline using the snapped points
         routePoly = mMap.addPolyline(polylineOptions);
 
         // Customize the polyline appearance if needed
         routePoly.setColor(ContextCompat.getColor(application.getApplicationContext(), R.color.purple_700));
-        routePoly.setWidth(10);  // Set the polyline width in pixels
+        routePoly.setWidth(20);  // Set the polyline width in pixels
 
-        // Clear the snappedPoints list for the next route generation
-        snappedPoints.clear();
 
-        // Set PolylineOptions in ViewModel
-        mapViewModel.setOptionsMutableLiveData(polylineOptions);
+
+        mapViewModel.setSnappedPointsLiveData(snappedPoints);
+    }
+
+    private void moveCameraToRoute(LatLng zoomToCords) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                zoomToCords, DEFAULT_ZOOM));
+    }
+
+    public void setSnappedPoints(List<LatLng> snappedPoints) {
+        this.snappedPoints = snappedPoints;
     }
 
     public double degreesToRadians(double degrees) {
