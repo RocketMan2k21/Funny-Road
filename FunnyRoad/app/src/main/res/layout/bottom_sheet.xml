@@ -9,6 +9,7 @@
     app:behavior_hideable="false"
     app:behavior_peekHeight="40dp"
     android:elevation="10dp"
+    android:onClick="BottomSheetOnClick"
     app:layout_behavior="@string/bottom_sheet_behavior"
     >
 

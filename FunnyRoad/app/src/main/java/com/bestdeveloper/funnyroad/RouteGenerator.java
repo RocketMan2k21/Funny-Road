@@ -1,6 +1,7 @@
 package com.bestdeveloper.funnyroad;
 
 import android.app.Application;
+import android.graphics.Color;
 import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
@@ -8,6 +9,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.bestdeveloper.funnyroad.api.RetrofitService;
 import com.bestdeveloper.funnyroad.model.SnappedPointResult;
 import com.bestdeveloper.funnyroad.viewModel.MapViewModel;
@@ -17,6 +24,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.PolyUtil;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +44,11 @@ public class RouteGenerator {
     private static final String TAG = "RouteGenerator";
     public static final double EarthR = 6371e3;
     private static final int CIRCLE_DEGREE = 360;
-    private static final int NUM_OF_POINTS_ON_CIRC = 97;
+    private static final int NUM_OF_POINTS_ON_CIRC = 90;
     private static final int DEFAULT_ZOOM = 16;
     private Application application;
     private GoogleMap mMap;
+    private RequestQueue requestQueue;
 
     private Location currentLocation;
 
@@ -54,6 +67,7 @@ public class RouteGenerator {
         this.application = application;
         this.mapViewModel = mapViewModel;
         rectOption.color(R.color.purple_700);
+        requestQueue = Volley.newRequestQueue(application.getApplicationContext());
 
     }
 
@@ -64,14 +78,15 @@ public class RouteGenerator {
                 currentLocation.getLatitude(),
                 currentLocation.getLongitude(),
                 circleRadius,
-                circleDegreeWalked
-        );
+                circleDegreeWalked);
         List<LatLng> pointsToSnap = getPointsOnCircumference(circleRadius, currentLocation, circleCenter, NUM_OF_POINTS_ON_CIRC);
 
         snapPoints(String.join("|", toPath(pointsToSnap)), new SnappingPointCallback() {
             @Override
-            public void SnappingPointCallback() {;
+            public void SnappingPointCallback() {
                 routeDistance = calculateRouteDistance();
+                snappedPoints.add(snappedPoints.get(0));
+                volleyResponse();
                 showRoad();
                 moveCameraToRoute(circleCenter);
                 Toast.makeText(application.getApplicationContext(), "Route found Dist:" + routeDistance, Toast.LENGTH_SHORT).show();
@@ -97,6 +112,7 @@ public class RouteGenerator {
             }
         });
 
+       
     }
 
     private double getRandomNumber(double min, double max) {
@@ -154,23 +170,28 @@ public class RouteGenerator {
     private List<LatLng> getPointsOnCircumference(final double radiusInMeters, final Location currentLocation, final LatLng center, int numOfPoints){
         double slice = 360 / numOfPoints;
         List<LatLng> lngArrayList = new ArrayList<>();
-        LatLng startingPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-        lngArrayList.add(startingPoint);
         for (int i = 0; i < numOfPoints; i++)
         {
             double angle = slice * i;
 
             lngArrayList.add(calculateNewCoordinates(center.latitude, center.longitude, radiusInMeters, angle));
 
-        }
 
-        LatLng endPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude() + 0.0000001);
-        lngArrayList.add(endPoint);
+        }
 
         return lngArrayList;
 
     }
 
+    private void showPoints(List<LatLng> points){
+        mMap.clear();
+        PolylineOptions polylineOptions = new PolylineOptions();
+        for (LatLng point : points) {
+            mMap.addMarker(new MarkerOptions().position(point).title("Marker " + points.indexOf(point)));
+            polylineOptions.add(point);
+        }
+        mMap.addPolyline(polylineOptions);
+    }
     public void snapPoints(String path, SnappingPointCallback  callback){
         RetrofitService.SnappingPointsService snappingPointsService = RetrofitService.getSnappingPointsService();
 
@@ -207,20 +228,13 @@ public class RouteGenerator {
         for (LatLng point : snappedPoints) {
             polylineOptions.add(point);
         }
-
-        // Start/End markers
-        mMap.addMarker(new MarkerOptions().position(snappedPoints.get(0)).title("Start"));
-        mMap.addMarker(new MarkerOptions().position(snappedPoints.get(snappedPoints.size()-1)).title("Finish"));
-
-
+      
         // Create a new polyline using the snapped points
         routePoly = mMap.addPolyline(polylineOptions);
 
         // Customize the polyline appearance if needed
         routePoly.setColor(ContextCompat.getColor(application.getApplicationContext(), R.color.purple_700));
         routePoly.setWidth(20);  // Set the polyline width in pixels
-
-
 
         mapViewModel.setSnappedPointsLiveData(snappedPoints);
     }
@@ -239,6 +253,7 @@ public class RouteGenerator {
     }
     public double calculateRouteDistance() {
         double distance = 0;
+
         if(!snappedPoints.isEmpty())
             for(int i = 0; i < snappedPoints.size()-1; i++){
                 double lat1 = snappedPoints.get(i).latitude;
@@ -257,6 +272,89 @@ public class RouteGenerator {
             }
         Log.d(TAG, "route distance in meters: " + distance);
         return distance;
+    }
+
+    private int getIndexOfTheNearestPoint(double lat, double lon){
+        double MinDistance = Double.MAX_VALUE; // Initialize to a large value
+        int indexOfTheNearestPoint = -1; // Initialize to -1 indicating no point found
+        double φ1 = degreesToRadians(lat); // Calculate φ1 (latitude of target point)
+
+        if (!snappedPoints.isEmpty()) {
+            for (int i = 0; i < snappedPoints.size(); i++) {
+                double lat1 = snappedPoints.get(i).latitude;
+                double lon1 = snappedPoints.get(i).longitude;
+
+                double φ2 = degreesToRadians(lat1);
+                double Δφ = degreesToRadians(lat1 - lat);
+                double Δλ = degreesToRadians(lon1 - lon);
+
+                double a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                        Math.cos(φ1) * Math.cos(φ2) *
+                                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+                double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                double distance = EarthR * c;
+
+                if (distance < MinDistance) {
+                    MinDistance = distance; // Update minimum distance
+                    indexOfTheNearestPoint = i; // Update index of nearest point
+                }
+            }
+        }
+
+        return indexOfTheNearestPoint;
+    }
+
+
+    private void volleyResponse(){
+        List<LatLng> wayPoints = new ArrayList<>();
+        wayPoints.add(snappedPoints.get(0));
+        wayPoints.add(snappedPoints.get(snappedPoints.size()-1));
+        volleyRequest(wayPoints);
+    }
+
+    private List<List<LatLng>> volleyRequest(List<LatLng> wayPoints){
+        List<List<LatLng>> path = new ArrayList<>();
+        LatLng currentLocationLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+        String urlDirections = "https://maps.googleapis.com/maps/api/directions/json" +
+                "?destination="+ substringLatLng(snappedPoints.get(getIndexOfTheNearestPoint(currentLocation.getLatitude(), currentLocation.getLongitude()))) +
+                "&origin="+ substringLatLng(currentLocationLatLng) +
+                "&key="+BuildConfig.MAPS_API_KEY;
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, urlDirections, null,
+                new com.android.volley.Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            Log.i(TAG, "Volley: successful");
+                            JSONArray routes = response.getJSONArray("routes");
+                            JSONArray legs = routes.getJSONObject(0).getJSONArray("legs");
+                            JSONArray steps = legs.getJSONObject(0).getJSONArray("steps");
+                            for (int i = 0; i < steps.length(); i++) {
+                                String points = steps.getJSONObject(i).getJSONObject("polyline").getString("points");
+                                path.add(PolyUtil.decode(points));
+                            }
+                            for (int i = 0; i < path.size(); i++) {
+                                mMap.addPolyline(new PolylineOptions().addAll(path.get(i)).color(R.color.purple_700));
+                                mMap.addMarker(new MarkerOptions().position(path.get(0).get(0)));
+                            }
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+            }
+        });
+
+        requestQueue.add(jsonObjectRequest);
+
+        return null;
+    }
+
+    private String substringLatLng(LatLng point){
+        return point.latitude + "," + point.longitude;
     }
 
 

@@ -75,6 +75,7 @@ public class MapActivity extends AppCompatActivity
     // UI input
     private EditText inputDistanceEditTxt;
     LinearLayout llBottomSheet;
+    BottomSheetBehavior bottomSheetBehavior;
 
     public MapActivity() {
     }
@@ -86,6 +87,7 @@ public class MapActivity extends AppCompatActivity
 
         // Expand the bottom sheet
         llBottomSheet = (LinearLayout) findViewById(R.id.bottom_sheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
         expandTheBottomSheet();
 
         mapViewModel = new ViewModelProvider(this).get(MapViewModel.class);
@@ -111,6 +113,7 @@ public class MapActivity extends AppCompatActivity
                 String distanceString = inputDistanceEditTxt.getText().toString();
                 if(!TextUtils.isEmpty(distanceString)) {
                     final int distance = Integer.parseInt(distanceString);
+                    Log.d(TAG, "inp. dist. : " + distance);
                     if (distance > 0){
                         generateRoute(lastKnownLocation, distance);
                         collapseTheBottomSheet();
@@ -127,14 +130,19 @@ public class MapActivity extends AppCompatActivity
     }
 
     private void collapseTheBottomSheet() {
-        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
     private void expandTheBottomSheet() {
         // set option for bottom sheet - expanded
-        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+    }
+
+    public void BottomSheetOnClick(View view){
+        if(bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED)
+            expandTheBottomSheet();
+        else
+            collapseTheBottomSheet();
     }
 
     private void generateRoute(Location lastKnownLocation, int distance) {

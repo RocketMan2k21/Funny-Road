@@ -64,6 +64,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0'
     annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.4.0'
 
+    implementation 'com.google.maps.android:android-maps-utils:3.8.2'
+
 
     // my best bro - retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
