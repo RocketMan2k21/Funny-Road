@@ -334,9 +334,9 @@ public class RouteGenerator {
                                 path.add(PolyUtil.decode(points));
                             }
                             for (int i = 0; i < path.size(); i++) {
-                                mMap.addPolyline(new PolylineOptions().addAll(path.get(i)).color(R.color.purple_700));
-                                mMap.addMarker(new MarkerOptions().position(path.get(0).get(0)));
+                                showFromUserToRoute(path, i);
                             }
+                            mapViewModel.setDirectionsPoints(path);
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
                         }
@@ -356,6 +356,12 @@ public class RouteGenerator {
     private String substringLatLng(LatLng point){
         return point.latitude + "," + point.longitude;
     }
+
+    public void showFromUserToRoute(List<List<LatLng>> path, int i){
+        mMap.addPolyline(new PolylineOptions().addAll(path.get(i)).color(R.color.purple_700)).setWidth(20);
+        mMap.addMarker(new MarkerOptions().position(path.get(0).get(0)).title("Start"));
+    }
+
 
 
 }

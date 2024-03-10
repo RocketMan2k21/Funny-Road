@@ -16,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.bestdeveloper.funnyroad.BuildConfig;
@@ -30,7 +29,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
@@ -38,9 +36,6 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MapActivity extends AppCompatActivity
     implements OnMapReadyCallback {
@@ -161,12 +156,16 @@ public class MapActivity extends AppCompatActivity
         pointsGenerator = new RouteGenerator(getApplication(), mapViewModel ,map);
 
         //Check if there was an polyline
-        List<LatLng> value = mapViewModel.getPointsMutableLiveData().getValue();
+        List<LatLng> snappedPoints = mapViewModel.getSnappedPoints().getValue();
+        List<List<LatLng>> directionsPoints = mapViewModel.getDirectionsPoints().getValue();
 
-        if(value != null){
-            pointsGenerator.setSnappedPoints(value);
+        if(snappedPoints != null && directionsPoints != null){
+            pointsGenerator.setSnappedPoints(snappedPoints);
             pointsGenerator.showRoad();
+            pointsGenerator.showFromUserToRoute(directionsPoints, 0);
         }
+
+
 
 
     }
