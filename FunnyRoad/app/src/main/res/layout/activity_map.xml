@@ -1,20 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.MapActivity">
+    tools:context=".activity.MapActivity"
+    android:orientation="vertical">
 
-    <fragment
+    <FrameLayout
+        android:id="@+id/flFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:layout_constraintTop_toBottomOf="@id/buttonNavView">
+    </FrameLayout>
+
+<!--    <include-->
+<!--        layout="@layout/bottom_bar"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content" />-->
+<!--    -->
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/buttonNavView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:menu="@menu/button_nav_menu" />
 
     <!-- подключение нижнего экрана -->
-    <include layout="@layout/bottom_sheet" />
 
-    <!--<include layout="@layout/bottom_bar"/>-->
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+<!--    <include layout="@layout/bottom_sheet" />-->
+
+</LinearLayout>

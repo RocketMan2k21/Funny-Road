@@ -4,21 +4,12 @@
     android:id="@+id/bottom_sheet"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bottom_sheet_shape"
     android:orientation="vertical"
     app:behavior_hideable="false"
     app:behavior_peekHeight="40dp"
     android:elevation="10dp"
     app:layout_behavior="@string/bottom_sheet_behavior"
     >
-
-    <ImageView
-        android:layout_width="70dp"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_round"
-        android:layout_gravity="center|top"
-        android:scaleType="centerCrop"/>
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -68,31 +59,6 @@
             android:layout_height="wrap_content"
             android:textSize="24sp"
             android:text="@string/route_type"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="10dp">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:text="@string/save_route"
-            android:onClick="onSaveBtn"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:id="@+id/generate_btn"
-            android:layout_marginStart="50dp"
-            android:text="@string/generate_btn"
-            />
-
     </LinearLayout>
 
 

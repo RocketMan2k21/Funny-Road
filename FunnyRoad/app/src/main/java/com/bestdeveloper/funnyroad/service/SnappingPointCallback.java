@@ -1,4 +1,4 @@
-package com.bestdeveloper.funnyroad;
+package com.bestdeveloper.funnyroad.service;
 
 public interface SnappingPointCallback {
     void SnappingPointCallback();
