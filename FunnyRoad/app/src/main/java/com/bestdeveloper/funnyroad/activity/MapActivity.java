@@ -2,38 +2,29 @@ package com.bestdeveloper.funnyroad.activity;
 
 import android.location.Location;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.bestdeveloper.funnyroad.RouteMaker;
+import com.bestdeveloper.funnyroad.fragments.RouteMaker;
 import com.bestdeveloper.funnyroad.R;
 import com.bestdeveloper.funnyroad.fragments.MapFragment;
 import com.bestdeveloper.funnyroad.fragments.RoutesFragment;
-import com.bestdeveloper.funnyroad.viewModel.MapViewModel;
+import com.bestdeveloper.funnyroad.fragments.MapViewModel;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.navigation.NavigationBarView;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class MapActivity extends AppCompatActivity
     implements NavigationBarView.OnItemSelectedListener {

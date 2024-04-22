@@ -23,12 +23,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="24sp"
-            android:hint="@string/distance_hint" />
+            android:hint="@string/distance_edit" />
 
         <EditText
+            android:inputType="numberDecimal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="24sp"
+            android:hint="@string/distance_hint"
             android:id="@+id/user_dist_etx"
             />
 
@@ -46,6 +48,7 @@
             android:layout_height="wrap_content"
             android:textSize="24sp"
             android:text="@string/sport_type"/>
+
 
     </LinearLayout>
 
