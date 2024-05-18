@@ -12,7 +12,6 @@ android {
 
     buildFeatures{
         dataBinding true
-        viewBinding true
     }
 
     defaultConfig {
@@ -46,13 +45,6 @@ dependencies {
 
     // Firestore
     implementation "com.google.firebase:firebase-firestore"
-
-    //Room
-    def room_version = "2.5.2"
-
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
-
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -64,7 +56,7 @@ dependencies {
 
     //viewmodel
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0'
-    annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.4.0'
+    kapt 'androidx.lifecycle:lifecycle-compiler:2.4.0'
 
     implementation 'com.google.maps.android:android-maps-utils:3.8.2'
 
@@ -84,9 +76,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
 
     //Glide
-    implementation 'com.github.bumptech.glide:glide:4.11.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    kapt 'com.github.bumptech.glide:compiler:4.11.0'
 
-    kapt "com.android.databinding:compiler:3.0.1"
-
+    //Polyline animator
+    implementation 'com.github.p72b:PolylineAnimator:0.1.3'
 }

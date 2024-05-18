@@ -24,6 +24,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.maps.android.PolyUtil
+import de.p72b.maps.animation.AnimatedPolyline
 import org.json.JSONException
 import retrofit2.Call
 import retrofit2.Callback
@@ -69,7 +70,7 @@ class RouteMaker(
         snapPoints(java.lang.String.join("|", *toPath(pointsToSnap))) {
             routeDistance = calculateRouteDistance()
             snappedPoints.add(snappedPoints[0])
-            volleyResponse()
+            //volleyResponse()
             moveCameraToRoute(circleCenter)
             Toast.makeText(
                 application.applicationContext,
@@ -205,6 +206,10 @@ class RouteMaker(
     }
 
     fun showRoad() {
+        // Shows animated polyline using PolylineAnimator library
+
+
+
         val polylineOptions = PolylineOptions() // Create a new instance
         for (point in snappedPoints) {
             polylineOptions.add(point)
@@ -217,7 +222,6 @@ class RouteMaker(
         routePoly!!.color =
             ContextCompat.getColor(application.applicationContext, R.color.purple_700)
         routePoly!!.width = 20f // Set the polyline width in pixels
-
         mapViewModel.route.value = Route(PolyUtil.encode(snappedPoints), routeDistance, RideType.WALK, Route.RouteType.CIRCLE)
     }
 
@@ -326,9 +330,8 @@ class RouteMaker(
         return point.latitude.toString() + "," + point.longitude
     }
 
-    fun setPath(decoded_path: String?): RouteMaker {
+    fun setPath(decoded_path: String?) {
         snappedPoints = PolyUtil.decode(decoded_path)
-        return this
     }
 
     val routePath: String

@@ -1,42 +1,48 @@
 package com.bestdeveloper.funnyroad.model
 
+import android.util.Log
 import android.widget.ImageView
 import androidx.databinding.BindingAdapter
 import com.bumptech.glide.Glide
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.BuildConfig
-import com.google.maps.android.PolyUtil
 
-class Route(
-    var encodedPolyline: String,
-    var distance: Double,
-    var rideType: RideType,
-    var routeType: RouteType
+data class Route (
+    var encodedPolyline: String = "",
+    var distance: Double = 0.0,
+    var rideType: RideType = RideType.WALK,
+    var routeType: RouteType = RouteType.CIRCLE,
+    var routeId: String = ""
 ) {
 
-    fun substringLatLng(point: LatLng): String {
-        return point.latitude.toString() + "," + point.longitude
+    companion object {
+        @JvmStatic
+        @BindingAdapter("imageRoutePath")
+        fun loadImage(imageView: ImageView, path: String) {
+            val imagePath = "https://maps.googleapis.com/maps/api/staticmap?path=enc:${path}" +
+                    "&key=${com.bestdeveloper.funnyroad.BuildConfig.MAPS_API_KEY}" +
+                    "&size=500x500"
+
+            Log.d("Route", "image_path: $imagePath")
+            Glide.with(imageView.context)
+                .load(imagePath)
+                .into(imageView)
+        }
     }
 
-    val decodedPolyline: List<LatLng>
-        get() = PolyUtil.decode(encodedPolyline)
-
-    fun setPolyline_encoded(polyline_encoded: String) {
-        encodedPolyline = polyline_encoded
-    }
-
-
-    @BindingAdapter("imageRoutePath")
-    fun loadImage(imageView: ImageView, encodedPolyline: String) {
-        val imagePath = "https://maps.googleapis.com/maps/api/staticmap?path=enc:${encodedPolyline}" +
-                "&key=${com.bestdeveloper.funnyroad.BuildConfig.MAPS_API_KEY}" +
-                "&size=500x500"
-        Glide.with(imageView.context)
-            .load(imagePath)
-            .into(imageView)
-    }
 
     enum class RouteType {
-        CIRCLE, STRAIGHT
+        CIRCLE,
+        STRAIGHT
     }
+
+    override fun toString(): String {
+        return "Route(encodedPolyline='$encodedPolyline', distance=$distance, rideType=$rideType, routeType=$routeType, routeId='$routeId')"
+    }
+
+
+
+
 }
+
+
+
+

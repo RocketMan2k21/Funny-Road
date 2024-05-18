@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bestdeveloper.funnyroad.R
 import com.bestdeveloper.funnyroad.model.Route
@@ -48,11 +49,17 @@ class MapFragment : Fragment() {
     private var lastKnownLocation: Location? = null
     private var fabButton: FloatingActionButton? = null
     private lateinit var currRoute: Route
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val rootView = inflater.inflate(R.layout.fragment_map, container, false)
+        return rootView
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
         mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
@@ -62,9 +69,13 @@ class MapFragment : Fragment() {
             mapReady = true
             updateMap()
         }
-        fabButton = rootView.findViewById(R.id.fab) as FloatingActionButton
+
+        mapViewModel!!.route.observe(viewLifecycleOwner, Observer {
+            currRoute = it
+        })
+
+        fabButton = view.findViewById(R.id.fab) as FloatingActionButton
         fabButton!!.setOnClickListener(View.OnClickListener { makeAndSaveRoute() })
-        return rootView
     }
 
     private fun makeAndSaveRoute() {
@@ -78,7 +89,7 @@ class MapFragment : Fragment() {
             .setPositiveButton("Make new") { dialog, which -> }
             .setNegativeButton("Save") { dialog, which ->
                 if (isGenerated) {
-                    mapViewModel!!.saveRoute(currRoute)
+                    saveRoute(currRoute)
                 } else {
                     dialog.cancel()
                 }
@@ -109,24 +120,37 @@ class MapFragment : Fragment() {
     }
 
     private fun updateMap() {
-        locationPermission
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
 
-
         // Get the current location of the device and set the position of the map.
         deviceLocation
-        routeGenerator = RouteMaker(requireActivity().application, mapViewModel!!, mMap!!)
-        currRoute = mapViewModel!!.route.value!!
 
-        //Check if there was an generated route
-        isGenerated = if (currRoute != null) {
-            routeGenerator!!.setPath(currRoute.encodedPolyline).showRoad()
-            true
-        } else {
-            false
+        // Initialize routeGenerator if not already initialized
+        if (routeGenerator == null) {
+            routeGenerator = RouteMaker(requireActivity().application, mapViewModel!!, mMap!!)
         }
-    }// Set the map's camera position to the current location of the device.
+
+        // Ensure mapViewModel and currRoute are not null before accessing their properties
+        if (mapViewModel != null && mapViewModel!!.route.value != null) {
+            currRoute = mapViewModel!!.route.value!!
+
+            // Check if currRoute and routeGenerator are not null before accessing their properties or methods
+            if (routeGenerator != null) {
+                // Set the path and show the road
+                isGenerated = true
+                routeGenerator!!.setPath(currRoute!!.encodedPolyline)
+                routeGenerator!!.showRoad()
+            } else {
+                // Handle null currRoute or routeGenerator
+                Log.e(TAG, "currRoute or routeGenerator is null")
+            }
+        } else {
+            // Handle null mapViewModel or route value
+            Log.e(TAG, "mapViewModel or route value is null")
+        }
+    }
+
 
     /*
             * Get the best and most recent location of the device, which may be null in rare

@@ -99,4 +99,5 @@
     <string name="route_type">Route Type</string>
     <string name="sport_type">Sport</string>
     <string name="save_route">Save</string>
+    <string name="no_saved_routes">There are no saved routes</string>
 </resources>

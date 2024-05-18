@@ -25,13 +25,19 @@
 
         <activity
             android:name=".activity.MapActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".activity.SignUpActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".activity.WelcomeActivity"
-            android:exported="true" >
+            android:exported="true"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
