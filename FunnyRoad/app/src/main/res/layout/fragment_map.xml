@@ -11,6 +11,7 @@
         android:id="@+id/mapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+
         tools:layout="@layout/fragment_map" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -18,7 +19,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/baseline_add_road_24"
-        android:background="@color/purple_500"
+        android:background="@drawable/route_butt"
+        android:elevation="5dp"
         android:layout_gravity="end|bottom"
         android:layout_margin="16dp" />
 

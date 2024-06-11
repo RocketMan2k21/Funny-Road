@@ -1,10 +1,13 @@
 package com.bestdeveloper.funnyroad.fragments
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.app.Application
+import android.graphics.Camera
+import android.graphics.Color
 import android.location.Location
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
@@ -17,12 +20,10 @@ import com.bestdeveloper.funnyroad.model.Route
 import com.bestdeveloper.funnyroad.model.SnappedPoint
 import com.bestdeveloper.funnyroad.model.SnappedPointResult
 import com.bestdeveloper.funnyroad.service.SnappingPointCallback
+import com.bestdeveloper.funnyroad.service.Utils
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.Polyline
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
 import de.p72b.maps.animation.AnimatedPolyline
 import org.json.JSONException
@@ -31,11 +32,12 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.concurrent.Executors
 import java.util.function.Consumer
+import kotlin.collections.ArrayList
 
 class RouteMaker(
     private val application: Application,
     private val mapViewModel: MapViewModel,
-    private val mMap: GoogleMap
+    private var mMap: GoogleMap
 ) {
     private val requestQueue: RequestQueue
     private var currentLocation: Location? = null
@@ -44,12 +46,11 @@ class RouteMaker(
     private var distanceInMeters = 0.0
     private var routeDistance = 0.0
     private var snappedPoints: MutableList<LatLng> = ArrayList()
-    private val rectOption = PolylineOptions()
-    private var routePoly: Polyline? = null
+    private val endCapIcon: BitmapDescriptor
 
     init {
-        rectOption.color(R.color.purple_700)
         requestQueue = Volley.newRequestQueue(application.applicationContext)
+        endCapIcon = Utils.getEndCapIcon(application, R.color.white)
     }
 
     // Generates a circle and markers on it
@@ -71,12 +72,13 @@ class RouteMaker(
             routeDistance = calculateRouteDistance()
             snappedPoints.add(snappedPoints[0])
             //volleyResponse()
-            moveCameraToRoute(circleCenter)
             Toast.makeText(
                 application.applicationContext,
                 "Route found Dist:$routeDistance",
                 Toast.LENGTH_SHORT
             ).show()
+            mapViewModel.route.value = Route(PolyUtil.encode(snappedPoints), routeDistance, RideType.WALK, Route.RouteType.CIRCLE)
+
         }
     }
 
@@ -207,31 +209,74 @@ class RouteMaker(
 
     fun showRoad() {
         // Shows animated polyline using PolylineAnimator library
+        val polylineSet = FunnyPolyline(application, mMap)
+        var arrowsPlacesOnPolyline = polylineSet.getArrowsPlacesOnPolyline(snappedPoints, mMap.cameraPosition.zoom)
+        var polyline : Polyline? = null
 
+        MapCameraMover.moveCameraToRoute(snappedPoints, mMap)
 
+        // Draw the stroke polyline
+        val strokeOptions = PolylineOptions()
+            .color(Color.parseColor("#8900f2")) // The color for the stroke
+            .width(20f) // Width for the stroke, slightly larger than the main polyline
+            .addAll(snappedPoints)
 
-        val polylineOptions = PolylineOptions() // Create a new instance
-        for (point in snappedPoints) {
-            polylineOptions.add(point)
+// Draw the main polyline
+        val mainPolylineOptions = PolylineOptions()
+            .color(Color.parseColor("#480ca8")) // The main polyline color
+            .width(32f) // Width for the main polyline
+            .addAll(snappedPoints)
+        mMap.addPolyline(mainPolylineOptions)
+        mMap.addPolyline(strokeOptions)
+
+        for (place in arrowsPlacesOnPolyline) {
+            polyline = polylineSet.drawPolylineWithArrowEndcap(place.key, place.value)
         }
 
-        // Create a new polyline using the snapped points
-        routePoly = mMap.addPolyline(polylineOptions)
 
-        // Customize the polyline appearance if needed
-        routePoly!!.color =
-            ContextCompat.getColor(application.applicationContext, R.color.purple_700)
-        routePoly!!.width = 20f // Set the polyline width in pixels
-        mapViewModel.route.value = Route(PolyUtil.encode(snappedPoints), routeDistance, RideType.WALK, Route.RouteType.CIRCLE)
+
+
+// Add the polylines to the map
+//        val strokePoly = AnimatedPolyline(
+//            mMap,
+//            snappedPoints,
+//            duration = 600,
+//            polylineOptions = strokeOptions,
+//            animatorListenerAdapter = object : AnimatorListenerAdapter(){
+//                override fun onAnimationEnd(animation: Animator) {
+//                    super.onAnimationEnd(animation)
+//
+//
+//                    if(snappedPoints != null && !snappedPoints.isEmpty()){
+//                        Log.i(TAG, "Route must be shown ")
+//                    }else{
+//                        Log.i(TAG, "Route can't be shown")
+//                    }
+//
+//                }
+//            }
+//        )
+//
+//        val mainPoly = AnimatedPolyline(
+//            mMap,
+//            snappedPoints,
+//            polylineOptions = mainPolylineOptions,
+//            duration = 600,
+//            animatorListenerAdapter = object : AnimatorListenerAdapter() {
+//
+//                override fun onAnimationStart(animation: Animator, isReverse: Boolean) {
+//                    super.onAnimationStart(animation, isReverse)
+//                    strokePoly.start()
+//                }
+//            }
+//
+//        )
+//        mainPoly.start()
+
+
     }
 
-    private fun moveCameraToRoute(zoomToCords: LatLng) {
-        mMap.moveCamera(
-            CameraUpdateFactory.newLatLngZoom(
-                zoomToCords, DEFAULT_ZOOM.toFloat()
-            )
-        )
-    }
+
 
     fun setSnappedPoints(snappedPoints: MutableList<LatLng>) {
         this.snappedPoints = snappedPoints
@@ -334,8 +379,9 @@ class RouteMaker(
         snappedPoints = PolyUtil.decode(decoded_path)
     }
 
-    val routePath: String
-        get() = PolyUtil.encode(snappedPoints)
+    fun setMap(mMap : GoogleMap){
+        this.mMap = mMap
+    }
 
     companion object {
         private const val TAG = "RouteGenerator"

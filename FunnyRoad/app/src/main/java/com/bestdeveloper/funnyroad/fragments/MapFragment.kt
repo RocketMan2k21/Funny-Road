@@ -3,6 +3,7 @@ package com.bestdeveloper.funnyroad.fragments
 import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.location.Location
 import android.os.Bundle
 import android.text.TextUtils
@@ -11,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -23,17 +25,20 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class MapFragment : Fragment() {
-    private val TAG = Fragment::class.java.simpleName
+
+class MapFragment : Fragment(), OnMapReadyCallback {
+    private val TAG = "MapFragment"
     private var mMap: GoogleMap? = null
     private var mapReady = false
     private var locationPermissionGranted = false
-    private var mapViewModel: MapViewModel? = null
+    private lateinit var mapViewModel: MapViewModel
 
     // Points generator to make a trip
     private var routeGenerator: RouteMaker? = null
@@ -54,38 +59,33 @@ class MapFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val rootView = inflater.inflate(R.layout.fragment_map, container, false)
-        return rootView
+
+
+        return inflater.inflate(R.layout.fragment_map, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val mapFragment =
-            childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
-        mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        mapFragment!!.getMapAsync { googleMap: GoogleMap? ->
-            mMap = googleMap
-            mapReady = true
-            updateMap()
-        }
-
-        mapViewModel!!.route.observe(viewLifecycleOwner, Observer {
-            currRoute = it
-        })
+        initiateMap()
 
         fabButton = view.findViewById(R.id.fab) as FloatingActionButton
-        fabButton!!.setOnClickListener(View.OnClickListener { makeAndSaveRoute() })
+        fabButton!!.setOnClickListener { makeAndSaveRoute() }
+    }
+
+    private fun observeViewModel() {
+        mapViewModel.route.observe(viewLifecycleOwner, Observer {
+            updateRoute()
+        })
     }
 
     private fun makeAndSaveRoute() {
         val layoutInflater = LayoutInflater.from(context)
         val view = layoutInflater.inflate(R.layout.make_route_dig, null)
-        val dialogBilder = AlertDialog.Builder(context)
-        dialogBilder.setView(view)
+        val dialogBuilder = AlertDialog.Builder(context)
+        dialogBuilder.setView(view)
         val newDistance = view.findViewById<EditText>(R.id.user_dist_etx)
         newDistance.setText("1000")
-        dialogBilder.setCancelable(false)
+        dialogBuilder.setCancelable(false)
             .setPositiveButton("Make new") { dialog, which -> }
             .setNegativeButton("Save") { dialog, which ->
                 if (isGenerated) {
@@ -94,12 +94,12 @@ class MapFragment : Fragment() {
                     dialog.cancel()
                 }
             }
-        val dialog = dialogBilder.create()
+        val dialog = dialogBuilder.create()
         dialog.show()
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(View.OnClickListener {
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             if (TextUtils.isEmpty(newDistance.text.toString())) {
                 Toast.makeText(context, "Please enter a distance", Toast.LENGTH_SHORT).show()
-                return@OnClickListener
+                return@setOnClickListener
             }
             if (newDistance.text.toString().toInt() < 200) {
                 Toast.makeText(context, "Not valid distance", Toast.LENGTH_SHORT).show()
@@ -107,70 +107,87 @@ class MapFragment : Fragment() {
                 dialog.dismiss()
                 makeNewRoute(newDistance.text.toString().toInt().toDouble())
             }
-        })
+        }
     }
 
     private fun makeNewRoute(newDistance: Double) {
+        if (routeGenerator == null) {
+            routeGenerator = RouteMaker(requireActivity().application, mapViewModel, mMap!!)
+        }
         routeGenerator!!.generateRoute(lastKnownLocation, newDistance)
         isGenerated = true
     }
 
     private fun saveRoute(route: Route) {
-        mapViewModel!!.saveRoute(route)
+        mapViewModel.saveRoute(route)
+    }
+
+    private fun initiateMap() {
+        activity?.let {
+            val mapFragment =
+                childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
+            mapViewModel = ViewModelProvider(it).get(MapViewModel::class.java)
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(it)
+            mapFragment?.getMapAsync(this)
+        }
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        mapReady = true
+        val nightModeFlags = requireContext().resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK
+        when (nightModeFlags) {
+            Configuration.UI_MODE_NIGHT_YES -> mMap!!.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_night))
+            Configuration.UI_MODE_NIGHT_NO -> mMap!!.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_light))
+            Configuration.UI_MODE_NIGHT_UNDEFINED -> return
+        }
+        updateMap()
     }
 
     private fun updateMap() {
-        // Turn on the My Location layer and the related control on the map.
+        if (!mapReady) {
+            return
+        }
         updateLocationUI()
-
-        // Get the current location of the device and set the position of the map.
         deviceLocation
+        observeViewModel()
+    }
 
-        // Initialize routeGenerator if not already initialized
-        if (routeGenerator == null) {
-            routeGenerator = RouteMaker(requireActivity().application, mapViewModel!!, mMap!!)
+    private fun updateRoute() {
+        if (!mapReady || mMap == null) {
+            return
         }
 
-        // Ensure mapViewModel and currRoute are not null before accessing their properties
-        if (mapViewModel != null && mapViewModel!!.route.value != null) {
-            currRoute = mapViewModel!!.route.value!!
-
-            // Check if currRoute and routeGenerator are not null before accessing their properties or methods
+        if (routeGenerator == null) {
+            routeGenerator = RouteMaker(requireActivity().application, mapViewModel, mMap!!)
+        }
+        routeGenerator!!.setMap(mMap!!)
+        mapViewModel.route.value?.let {
+            currRoute = it
             if (routeGenerator != null) {
-                // Set the path and show the road
                 isGenerated = true
-                routeGenerator!!.setPath(currRoute!!.encodedPolyline)
-                routeGenerator!!.showRoad()
+                routeGenerator!!.setPath(currRoute.encodedPolyline)
+                mMap!!.setOnMapLoadedCallback { routeGenerator!!.showRoad() }
+
+                Log.i(TAG, "Route's shown")
             } else {
-                // Handle null currRoute or routeGenerator
-                Log.e(TAG, "currRoute or routeGenerator is null")
+                Log.e(TAG, "routeGenerator is null")
             }
-        } else {
-            // Handle null mapViewModel or route value
+        } ?: run {
             Log.e(TAG, "mapViewModel or route value is null")
         }
     }
 
-
-    /*
-            * Get the best and most recent location of the device, which may be null in rare
-            * cases when a location is not available.
-            */
     private val deviceLocation: Unit
-        private get() {
-            /*
-                * Get the best and most recent location of the device, which may be null in rare
-                * cases when a location is not available.
-                */
+        get() {
             try {
                 if (locationPermissionGranted) {
-                    val locationResult = fusedLocationProviderClient!!.lastLocation
-                    locationResult.addOnCompleteListener { task ->
+                    fusedLocationProviderClient?.lastLocation?.addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.result
                             if (lastKnownLocation != null) {
-                                mMap!!.moveCamera(
+                                mMap?.moveCamera(
                                     CameraUpdateFactory.newLatLngZoom(
                                         LatLng(
                                             lastKnownLocation!!.latitude,
@@ -182,11 +199,10 @@ class MapFragment : Fragment() {
                         } else {
                             Log.d(TAG, "Current location is null. Using defaults.")
                             Log.e(TAG, "Exception: %s", task.exception)
-                            mMap!!.moveCamera(
-                                CameraUpdateFactory
-                                    .newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat())
+                            mMap?.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat())
                             )
-                            mMap!!.uiSettings.isMyLocationButtonEnabled = false
+                            mMap?.uiSettings?.isMyLocationButtonEnabled = false
                         }
                     }
                 }
@@ -195,23 +211,12 @@ class MapFragment : Fragment() {
             }
         }
 
-    /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
     private val locationPermission: Unit
-        private get() {
-            /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
+        get() {
             if (ContextCompat.checkSelfPermission(
                     requireContext(),
                     Manifest.permission.ACCESS_FINE_LOCATION
-                )
-                == PackageManager.PERMISSION_GRANTED
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
                 locationPermissionGranted = true
             } else {
@@ -223,17 +228,11 @@ class MapFragment : Fragment() {
         }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<String>, grantResults: IntArray
     ) {
         locationPermissionGranted = false
-        if (requestCode
-            == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
-        ) {
-            if (grantResults.size > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            ) {
+        if (requestCode == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 locationPermissionGranted = true
             } else {
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -241,7 +240,7 @@ class MapFragment : Fragment() {
         }
     }
 
-    fun updateLocationUI() {
+    private fun updateLocationUI() {
         if (mMap == null) {
             return
         }
@@ -249,6 +248,7 @@ class MapFragment : Fragment() {
             if (locationPermissionGranted) {
                 mMap!!.isMyLocationEnabled = true
                 mMap!!.uiSettings.isMyLocationButtonEnabled = true
+                changeMyLocButtonLocation()
             } else {
                 mMap!!.isMyLocationEnabled = false
                 mMap!!.uiSettings.isMyLocationButtonEnabled = false
@@ -263,5 +263,18 @@ class MapFragment : Fragment() {
     companion object {
         private const val DEFAULT_ZOOM = 15
         private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
+    }
+
+    private fun changeMyLocButtonLocation(){
+        val locationButton =
+            (requireView().findViewById<View>("1".toInt()).getParent() as View).findViewById<View>("2".toInt())
+        val rlp = locationButton.layoutParams as RelativeLayout.LayoutParams
+        locationButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.loc_butt)
+        locationButton.elevation = 5f
+        // position on right bottom
+        rlp.addRule(RelativeLayout.BELOW, 0)
+        rlp.addRule(RelativeLayout.BELOW, RelativeLayout.TRUE)
+        rlp.setMargins(0, 180, 180, 0)
+
     }
 }

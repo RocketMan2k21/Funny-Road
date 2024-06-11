@@ -2,8 +2,7 @@ package com.bestdeveloper.funnyroad.activity
 
 import android.location.Location
 import android.os.Bundle
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -18,6 +17,7 @@ import com.bestdeveloper.funnyroad.fragments.RouteMaker
 import com.bestdeveloper.funnyroad.fragments.RoutesFragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -67,7 +67,9 @@ class MapActivity : AppCompatActivity(), NavigationBarView.OnItemSelectedListene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_map)
+
         mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
         bottomNavigationView = findViewById<BottomNavigationView>(R.id.buttonNavView)
         bottomNavigationView.setOnItemSelectedListener(this)

@@ -100,4 +100,8 @@
     <string name="sport_type">Sport</string>
     <string name="save_route">Save</string>
     <string name="no_saved_routes">There are no saved routes</string>
+    <string name="welcome_to_funny_road">Welcome to Funny Road!</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="log_in">LOG IN</string>
 </resources>
