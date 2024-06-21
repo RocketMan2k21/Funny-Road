@@ -4,78 +4,100 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.WelcomeActivity">
+    tools:context=".activity.WelcomeActivity"
+    android:padding="10dp">
 
     <TextView
         android:id="@+id/greetingText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/welcome_to_funny_road"
+        android:textColor="@color/black"
         android:textSize="32sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.122" />
-
-    <EditText
-        android:id="@+id/loginEmail"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="3dp"
-        android:layout_marginBottom="682dp"
-        android:hint="@string/email"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/loginEmail"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
+        android:id="@+id/loginEmail"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_margin="10dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginBottom="682dp"
+        android:hint="@string/email"
+        android:drawableStart="@drawable/custom_email_ic"
+        android:drawablePadding="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:background="@drawable/custom_welcome_edit"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <EditText
         android:id="@+id/loginPassword"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:layout_margin="10dp"
         android:hint="@string/password"
         android:inputType="textPassword"
+        android:drawablePadding="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:drawableStart="@drawable/custom_lock_ic"
+        android:background="@drawable/custom_welcome_edit"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/loginEmail" />
 
 
     <Button
-        android:id="@+id/welcome_signInBtn"
-        android:layout_width="wrap_content"
+        android:id="@+id/logInBtn"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/log_in"
         android:layout_marginTop="25dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:textSize="16sp"
+        android:background="@drawable/custom_log_in_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/loginPassword" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/txt_no_account"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
-        android:text="OR"
+        android:text="@string/don_t_have_account"
         android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.375"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcome_signInBtn" />
+        app:layout_constraintTop_toBottomOf="@+id/logInBtn"
+        app:layout_constraintVertical_bias="0.94" />
 
-    <Button
-        android:id="@+id/welcome_signUpBtn"
+    <TextView
+        android:id="@+id/sign_up_txt_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sign UP"
-        android:layout_marginTop="25dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
+        android:layout_marginStart="5dp"
+        android:text="@string/sign_up"
+        android:textColor="@color/purple_200"
+        android:textSize="20sp"
+        android:clickable="true"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/txt_no_account"
+        app:layout_constraintTop_toBottomOf="@id/logInBtn"
+        app:layout_constraintVertical_bias="0.94" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

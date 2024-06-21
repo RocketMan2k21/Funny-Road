@@ -18,51 +18,32 @@
         android:padding="10dp">
 
 
-        <TextView
-            android:id="@+id/userDistTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:hint="@string/distance_edit" />
 
         <EditText
             android:inputType="numberDecimal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
+            android:layout_width="300dp"
+            android:layout_height="40dp"
+            android:drawableStart="@drawable/custom_distance_ic"
+            android:drawablePadding="12dp"
+            android:textSize="14sp"
+            android:background="@drawable/route_cr_sel"
             android:hint="@string/distance_hint"
             android:id="@+id/user_dist_etx"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             />
 
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="10dp">
-
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:text="@string/sport_type"/>
-
+            android:text="@string/m"
+            android:textSize="14sp"
+            android:textAlignment="textEnd"
+            android:paddingEnd="15dp"/>
 
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:padding="10dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:text="@string/route_type"/>
-    </LinearLayout>
 
 
 </LinearLayout>

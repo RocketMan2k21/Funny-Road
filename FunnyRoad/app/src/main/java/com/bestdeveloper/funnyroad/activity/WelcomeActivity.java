@@ -12,11 +12,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bestdeveloper.funnyroad.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,7 +32,7 @@ public class WelcomeActivity extends AppCompatActivity {
     // Buttons
 
     Button jSignIn;
-    Button jSignUp;
+    TextView jSignUp;
 
     EditText loginEmail;
     EditText loginPassword;
@@ -45,8 +47,8 @@ public class WelcomeActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        jSignIn = findViewById(R.id.welcome_signInBtn);
-        jSignUp = findViewById(R.id.welcome_signUpBtn);
+        jSignIn = findViewById(R.id.logInBtn);
+        jSignUp = findViewById(R.id.sign_up_txt_btn);
         loginEmail = findViewById(R.id.loginEmail);
         loginPassword = findViewById(R.id.loginPassword);
 

@@ -94,8 +94,7 @@
     </string>
     <string name="action_settings">Settings</string>
     <string name="generate_btn">Make route</string>
-    <string name="distance_edit">Distance</string>
-    <string name="distance_hint">enter distance</string>
+    <string name="distance_hint">Distance</string>
     <string name="route_type">Route Type</string>
     <string name="sport_type">Sport</string>
     <string name="save_route">Save</string>
@@ -103,5 +102,8 @@
     <string name="welcome_to_funny_road">Welcome to Funny Road!</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
-    <string name="log_in">LOG IN</string>
+    <string name="log_in">Log In</string>
+    <string name="m">m</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="don_t_have_account">Don\'t have an account?</string>
 </resources>

@@ -22,49 +22,21 @@
         bind:imageRoutePath="@{route.encodedPolyline}"
         />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="10dp"
-        android:orientation="vertical">
+
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="30sp"
             android:id="@+id/rec_route_dist"
-            android:textAlignment="center"
-            android:text="@{String.valueOf(route.distance)}"
+            android:textAlignment="textEnd"
+            android:paddingEnd="20dp"
+            android:layout_gravity="center_vertical"
+            app:distanceText="@{route.distance}"
             />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:layout_marginTop="10dp">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:textSize="30sp"
-                android:layout_marginEnd="5dp"
-                android:id="@+id/ride_type_txt"
-                android:layout_gravity="bottom"
-                android:text="@{route.rideType.name()}"/>
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
-                android:layout_gravity="bottom"
-                android:textSize="30sp"
-                android:id="@+id/route_type_txt"
-                android:text="@{route.routeType.name()}"/>
-        </LinearLayout>
-
-    </LinearLayout>
 
 </LinearLayout>
 </layout>

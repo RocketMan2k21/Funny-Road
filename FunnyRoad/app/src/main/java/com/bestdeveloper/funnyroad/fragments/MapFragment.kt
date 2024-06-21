@@ -12,7 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.RelativeLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -34,7 +34,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
 class MapFragment : Fragment(), OnMapReadyCallback {
-    private val TAG = "MapFragment"
+
+    private lateinit var locButton: ImageView
     private var mMap: GoogleMap? = null
     private var mapReady = false
     private var locationPermissionGranted = false
@@ -70,6 +71,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         fabButton = view.findViewById(R.id.fab) as FloatingActionButton
         fabButton!!.setOnClickListener { makeAndSaveRoute() }
+        val locationButton = view.findViewById<View>(R.id.location_button)
+        locationButton.setOnClickListener { deviceLocation }
     }
 
     private fun observeViewModel() {
@@ -81,10 +84,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun makeAndSaveRoute() {
         val layoutInflater = LayoutInflater.from(context)
         val view = layoutInflater.inflate(R.layout.make_route_dig, null)
+
         val dialogBuilder = AlertDialog.Builder(context)
         dialogBuilder.setView(view)
+
         val newDistance = view.findViewById<EditText>(R.id.user_dist_etx)
-        newDistance.setText("1000")
         dialogBuilder.setCancelable(false)
             .setPositiveButton("Make new") { dialog, which -> }
             .setNegativeButton("Save") { dialog, which ->
@@ -149,8 +153,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (!mapReady) {
             return
         }
-        updateLocationUI()
+        locationPermission
         deviceLocation
+        updateLocationUI()
         observeViewModel()
     }
 
@@ -170,12 +175,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 routeGenerator!!.setPath(currRoute.encodedPolyline)
                 mMap!!.setOnMapLoadedCallback { routeGenerator!!.showRoad() }
 
-                Log.i(TAG, "Route's shown")
+                Log.i(Companion.TAG, "Route's shown")
             } else {
-                Log.e(TAG, "routeGenerator is null")
+                Log.e(Companion.TAG, "routeGenerator is null")
             }
         } ?: run {
-            Log.e(TAG, "mapViewModel or route value is null")
+            Log.e(Companion.TAG, "mapViewModel or route value is null")
         }
     }
 
@@ -187,7 +192,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         if (task.isSuccessful) {
                             lastKnownLocation = task.result
                             if (lastKnownLocation != null) {
-                                mMap?.moveCamera(
+                                mMap?.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(
                                         LatLng(
                                             lastKnownLocation!!.latitude,
@@ -195,14 +200,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                         ), DEFAULT_ZOOM.toFloat()
                                     )
                                 )
+                            }else {
+                                Log.d(Companion.TAG, "Current location is null. Using defaults.")
+                                Log.e(Companion.TAG, "Exception: %s", task.exception)
+                                mMap?.animateCamera(
+                                    CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat())
+                                )
+                                mMap?.uiSettings?.isMyLocationButtonEnabled = false
                             }
-                        } else {
-                            Log.d(TAG, "Current location is null. Using defaults.")
-                            Log.e(TAG, "Exception: %s", task.exception)
-                            mMap?.moveCamera(
-                                CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat())
-                            )
-                            mMap?.uiSettings?.isMyLocationButtonEnabled = false
                         }
                     }
                 }
@@ -244,14 +249,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (mMap == null) {
             return
         }
-        try {
+
+            try {
             if (locationPermissionGranted) {
                 mMap!!.isMyLocationEnabled = true
-                mMap!!.uiSettings.isMyLocationButtonEnabled = true
-                changeMyLocButtonLocation()
-            } else {
-                mMap!!.isMyLocationEnabled = false
                 mMap!!.uiSettings.isMyLocationButtonEnabled = false
+
+            } else {
                 lastKnownLocation = null
                 locationPermission
             }
@@ -263,18 +267,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     companion object {
         private const val DEFAULT_ZOOM = 15
         private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
+        const val TAG =  "MapFragment"
     }
 
-    private fun changeMyLocButtonLocation(){
-        val locationButton =
-            (requireView().findViewById<View>("1".toInt()).getParent() as View).findViewById<View>("2".toInt())
-        val rlp = locationButton.layoutParams as RelativeLayout.LayoutParams
-        locationButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.loc_butt)
-        locationButton.elevation = 5f
-        // position on right bottom
-        rlp.addRule(RelativeLayout.BELOW, 0)
-        rlp.addRule(RelativeLayout.BELOW, RelativeLayout.TRUE)
-        rlp.setMargins(0, 180, 180, 0)
 
-    }
 }

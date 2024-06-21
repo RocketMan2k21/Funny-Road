@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragments.MapFragment">
 
 
@@ -19,9 +20,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/baseline_add_road_24"
-        android:background="@drawable/route_butt"
-        android:elevation="5dp"
+        android:backgroundTint="@color/purple_200"
+        app:shapeAppearanceOverlay="@style/fab_square_rounded"
+        app:backgroundTint="@color/purple_200"
+        android:elevation="15dp"
         android:layout_gravity="end|bottom"
         android:layout_margin="16dp" />
+
+    <ImageView
+        android:id="@+id/location_button"
+        android:elevation="2dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:background="@drawable/loc_butt"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_location_off"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="100dp" />
 
 </FrameLayout>

@@ -36,4 +36,9 @@ object MapCameraMover {
         return builder.build()
     }
 
+    fun moveCameraTo(latlng: LatLng, mMap: GoogleMap){
+        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(latlng, DEFAULT_ZOOM)
+        mMap.animateCamera(cameraUpdate)
+    }
+
 }
