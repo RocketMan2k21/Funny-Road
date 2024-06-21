@@ -106,4 +106,6 @@
     <string name="m">m</string>
     <string name="sign_up">Sign Up</string>
     <string name="don_t_have_account">Don\'t have an account?</string>
+    <string name="choose_parameters">Choose parameters</string>
+    <string name="_1000">1000</string>
 </resources>

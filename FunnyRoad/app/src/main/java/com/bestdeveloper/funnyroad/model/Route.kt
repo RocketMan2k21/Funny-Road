@@ -33,8 +33,7 @@ data class Route (
         @JvmStatic
         @BindingAdapter("distanceText")
         fun setDistanceText(view: TextView, distance: Double) {
-            val decimalPart = (distance % 1).toString().substring(2) // Extract the decimal part and remove the leading "0."
-            view.text = "$decimalPart m"
+            view.text = "${distance.toInt()} m"
         }
     }
 

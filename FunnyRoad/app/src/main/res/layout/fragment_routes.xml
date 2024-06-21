@@ -18,8 +18,4 @@
        android:textStyle="italic"
        android:textAlignment="center"
       android:id="@+id/route_frag_textView"/>
-
-
-
-
 </FrameLayout>

@@ -30,6 +30,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
@@ -67,8 +68,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initiateMap()
-
+        mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        val mapFragment =
+            childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
+        mapFragment?.getMapAsync(this)
         fabButton = view.findViewById(R.id.fab) as FloatingActionButton
         fabButton!!.setOnClickListener { makeAndSaveRoute() }
         val locationButton = view.findViewById<View>(R.id.location_button)
@@ -85,10 +89,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val layoutInflater = LayoutInflater.from(context)
         val view = layoutInflater.inflate(R.layout.make_route_dig, null)
 
-        val dialogBuilder = AlertDialog.Builder(context)
+        val dialogBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.MaterialAlertDialog_Rounded)
         dialogBuilder.setView(view)
 
-        val newDistance = view.findViewById<EditText>(R.id.user_dist_etx)
+        val newDistance = view.findViewById<EditText>(R.id.dialog_distance_edit_txt)
         dialogBuilder.setCancelable(false)
             .setPositiveButton("Make new") { dialog, which -> }
             .setNegativeButton("Save") { dialog, which ->
@@ -126,15 +130,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mapViewModel.saveRoute(route)
     }
 
-    private fun initiateMap() {
-        activity?.let {
-            val mapFragment =
-                childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment?
-            mapViewModel = ViewModelProvider(it).get(MapViewModel::class.java)
-            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(it)
-            mapFragment?.getMapAsync(this)
-        }
-    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -154,8 +149,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             return
         }
         locationPermission
-        deviceLocation
         updateLocationUI()
+        deviceLocation
         observeViewModel()
     }
 
@@ -230,6 +225,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
                 )
             }
+            updateLocationUI()
         }
 
     override fun onRequestPermissionsResult(
