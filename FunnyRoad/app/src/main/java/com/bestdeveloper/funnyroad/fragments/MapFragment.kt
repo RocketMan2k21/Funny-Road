@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -36,6 +37,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
+    private lateinit var distance_edit_txt : EditText
     private lateinit var locButton: ImageView
     private var mMap: GoogleMap? = null
     private var mapReady = false
@@ -57,6 +59,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var fabButton: FloatingActionButton? = null
     private lateinit var currRoute: Route
 
+    // Button on dialogue view
+    private lateinit var dial_minus_btn : ImageButton
+    private lateinit var dial_add_btn: ImageButton
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -73,10 +79,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment?.getMapAsync(this)
+
         fabButton = view.findViewById(R.id.fab) as FloatingActionButton
         fabButton!!.setOnClickListener { makeAndSaveRoute() }
         val locationButton = view.findViewById<View>(R.id.location_button)
         locationButton.setOnClickListener { deviceLocation }
+
+
+
+
+
     }
 
     private fun observeViewModel() {
@@ -92,7 +104,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val dialogBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.MaterialAlertDialog_Rounded)
         dialogBuilder.setView(view)
 
-        val newDistance = view.findViewById<EditText>(R.id.dialog_distance_edit_txt)
+        distance_edit_txt = view.findViewById<EditText>(R.id.dialog_distance_edit_txt)
+        val initialDistanceCount = mapViewModel.getInitialDistanceCount()
+        initialDistanceCount.observe(viewLifecycleOwner, Observer {
+            distance_edit_txt.setText("" + it)
+        })
+
+        dial_add_btn = view.findViewById(R.id.dialog_plus_img_button)
+        dial_minus_btn = view.findViewById(R.id.dialog_minus_image_btn)
+
+        dial_add_btn.setOnClickListener(View.OnClickListener {
+            mapViewModel.onButtonClick(true)
+        })
+        dial_minus_btn.setOnClickListener(View.OnClickListener {
+            mapViewModel.onButtonClick(false)
+        })
+
+
         dialogBuilder.setCancelable(false)
             .setPositiveButton("Make new") { dialog, which -> }
             .setNegativeButton("Save") { dialog, which ->
@@ -105,15 +133,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val dialog = dialogBuilder.create()
         dialog.show()
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            if (TextUtils.isEmpty(newDistance.text.toString())) {
+            if (TextUtils.isEmpty(distance_edit_txt.text.toString())) {
                 Toast.makeText(context, "Please enter a distance", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (newDistance.text.toString().toInt() < 200) {
+            if (distance_edit_txt.text.toString().toInt() < 200) {
                 Toast.makeText(context, "Not valid distance", Toast.LENGTH_SHORT).show()
             } else {
                 dialog.dismiss()
-                makeNewRoute(newDistance.text.toString().toInt().toDouble())
+                makeNewRoute(distance_edit_txt.text.toString().toInt().toDouble())
             }
         }
     }

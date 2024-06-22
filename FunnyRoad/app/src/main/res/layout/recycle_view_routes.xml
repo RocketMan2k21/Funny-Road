@@ -6,8 +6,6 @@
             type="com.bestdeveloper.funnyroad.model.Route" />
     </data>
 
-
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:bind="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

@@ -11,6 +11,8 @@ class MapViewModel() : ViewModel() {
     private var firestore: FirebaseFirestore
     private var _route: MutableLiveData<Route> = MutableLiveData<Route>()
     private var _routes: MutableLiveData<ArrayList<Route>> = MutableLiveData()
+    private var _distance : MutableLiveData<Int> = MutableLiveData()
+    private var initialDistance = 1500
 
     init {
         firestore = FirebaseFirestore.getInstance()
@@ -84,4 +86,25 @@ class MapViewModel() : ViewModel() {
     internal var routes:MutableLiveData<ArrayList<Route>>
         get() {return _routes}
         set(value) {_routes = value}
+
+    fun getInitialDistanceCount(): MutableLiveData<Int>{
+            _distance.value = initialDistance
+            return _distance
+    }
+
+    fun updateCounter(value: Int) {
+        val new_value = (_distance.value ?: initialDistance) + value
+        if (new_value > 0)
+            _distance.value = new_value
+    }
+
+    fun onButtonClick(isIncrement: Boolean) {
+        val value = if (isIncrement) 200 else -200
+        updateCounter(value)
+    }
+
+
 }
+
+
+
