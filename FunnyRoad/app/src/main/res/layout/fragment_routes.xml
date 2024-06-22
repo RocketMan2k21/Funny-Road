@@ -3,19 +3,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.RoutesFragment">
+    tools:context=".fragments.RoutesFragment"
+    android:layout_margin="12dp">
+
+   <TextView
+       android:layout_width="wrap_content"
+       android:layout_height="match_parent"
+       android:text="@string/saved_routes"
+      android:textSize="28sp"
+       />
+
 
    <androidx.recyclerview.widget.RecyclerView
+       android:id="@+id/recycleView_routeFrag"
        android:layout_width="match_parent"
        android:layout_height="match_parent"
-       android:id="@+id/recycleView_routeFrag"/>
+       android:layout_marginTop="50dp"/>
 
    <TextView
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
        android:layout_gravity="center"
-       android:textSize="30sp"
-       android:textStyle="italic"
+       android:text="@string/no_saved_routes"
+       android:textSize="36sp"
+       android:textStyle="bold"
        android:textAlignment="center"
-      android:id="@+id/route_frag_textView"/>
+       android:visibility="gone"
+      android:id="@+id/route_frag_noSavedRoutes_textView"/>
 </FrameLayout>

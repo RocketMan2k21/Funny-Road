@@ -1,5 +1,7 @@
 package com.bestdeveloper.funnyroad.model
 
+import android.graphics.Color
+import android.provider.CalendarContract
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
@@ -19,10 +21,10 @@ data class Route (
         @BindingAdapter("imageRoutePath")
         fun loadImage(imageView: ImageView, path: String) {
             val imagePath = "https://maps.googleapis.com/maps/api/staticmap?path=" +
-                    "color:0x8900f2|weight=20"+
+                    "color:0x000000|weight:5"+
                     "|enc:${path}" +
                     "&key=${com.bestdeveloper.funnyroad.BuildConfig.MAPS_API_KEY}" +
-                    "&size=500x500"
+                    "&size=150x150&scale=2"
 
             Log.d("Route", "image_path: $imagePath")
             Glide.with(imageView.context)

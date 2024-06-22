@@ -6,6 +6,8 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -13,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.Visibility
 import com.bestdeveloper.funnyroad.R
 import com.bestdeveloper.funnyroad.activity.MapActivity
 import com.bestdeveloper.funnyroad.databinding.RecycleViewRoutesBinding
@@ -27,6 +30,9 @@ class RoutesFragment : Fragment() {
     private var routes: ArrayList<Route> = ArrayList()
     private lateinit var adapter: RoutesAdapter
 
+    // Text view for displaying "No saved routes"
+    private lateinit var noSavedRoutesTxt : TextView
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -37,9 +43,11 @@ class RoutesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        activity.let {
-            mapViewModel = ViewModelProvider(it!!).get(MapViewModel::class.java)
+        activity?.let {
+            mapViewModel = ViewModelProvider(it).get(MapViewModel::class.java)
         }
+
+        noSavedRoutesTxt = requireView().findViewById(R.id.route_frag_noSavedRoutes_textView)
 
         if(routes.isEmpty())
             displayAllRoutes()
@@ -85,6 +93,9 @@ class RoutesFragment : Fragment() {
         })
 
         handler.post(Runnable {
+            if (routes.isEmpty()){
+                noSavedRoutesTxt.visibility = TextView.VISIBLE
+            }
             adapter.notifyDataSetChanged()
         })
 

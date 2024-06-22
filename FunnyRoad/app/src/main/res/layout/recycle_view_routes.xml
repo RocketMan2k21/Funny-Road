@@ -6,18 +6,22 @@
             type="com.bestdeveloper.funnyroad.model.Route" />
     </data>
 
+
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:bind="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:elevation="2dp"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/card_route_fr">
     
     <com.google.android.material.imageview.ShapeableImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_margin="10dp"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_margin="24dp"
         android:id="@+id/route_img"
-
         app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
         bind:imageRoutePath="@{route.encodedPolyline}"
         />
@@ -27,10 +31,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="30sp"
+            android:textSize="36sp"
             android:id="@+id/rec_route_dist"
-            android:textAlignment="textEnd"
-            android:paddingEnd="20dp"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:layout_marginEnd="20dp"
             android:layout_gravity="center_vertical"
             app:distanceText="@{route.distance}"
             />

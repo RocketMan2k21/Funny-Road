@@ -98,7 +98,7 @@
     <string name="route_type">Route Type</string>
     <string name="sport_type">Sport</string>
     <string name="save_route">Save</string>
-    <string name="no_saved_routes">There are no saved routes</string>
+    <string name="no_saved_routes">No Saved Routes</string>
     <string name="welcome_to_funny_road">Welcome to Funny Road!</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
@@ -108,4 +108,5 @@
     <string name="don_t_have_account">Don\'t have an account?</string>
     <string name="choose_parameters">Choose parameters</string>
     <string name="_1000">1000</string>
+    <string name="saved_routes">Saved Routes</string>
 </resources>
