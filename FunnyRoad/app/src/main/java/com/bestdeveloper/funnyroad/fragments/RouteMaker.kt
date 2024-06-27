@@ -232,52 +232,7 @@ class RouteMaker(
         for (place in arrowsPlacesOnPolyline) {
             polyline = polylineSet.drawPolylineWithArrowEndcap(place.key, place.value)
         }
-
-
-
-
-// Add the polylines to the map
-//        val strokePoly = AnimatedPolyline(
-//            mMap,
-//            snappedPoints,
-//            duration = 600,
-//            polylineOptions = strokeOptions,
-//            animatorListenerAdapter = object : AnimatorListenerAdapter(){
-//                override fun onAnimationEnd(animation: Animator) {
-//                    super.onAnimationEnd(animation)
-//
-//
-//                    if(snappedPoints != null && !snappedPoints.isEmpty()){
-//                        Log.i(TAG, "Route must be shown ")
-//                    }else{
-//                        Log.i(TAG, "Route can't be shown")
-//                    }
-//
-//                }
-//            }
-//        )
-//
-//        val mainPoly = AnimatedPolyline(
-//            mMap,
-//            snappedPoints,
-//            polylineOptions = mainPolylineOptions,
-//            duration = 600,
-//            animatorListenerAdapter = object : AnimatorListenerAdapter() {
-//
-//                override fun onAnimationStart(animation: Animator, isReverse: Boolean) {
-//                    super.onAnimationStart(animation, isReverse)
-//                    strokePoly.start()
-//                }
-//            }
-//
-//        )
-//        mainPoly.start()
-
-
     }
-
-
-
     fun setSnappedPoints(snappedPoints: MutableList<LatLng>) {
         this.snappedPoints = snappedPoints
     }

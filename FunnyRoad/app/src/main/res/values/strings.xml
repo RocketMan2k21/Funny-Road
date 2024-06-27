@@ -94,7 +94,7 @@
     </string>
     <string name="action_settings">Settings</string>
     <string name="generate_btn">Make route</string>
-    <string name="distance_hint">Distance</string>
+    <string name="distance_hint">Distance m</string>
     <string name="route_type">Route Type</string>
     <string name="sport_type">Sport</string>
     <string name="save_route">Save</string>

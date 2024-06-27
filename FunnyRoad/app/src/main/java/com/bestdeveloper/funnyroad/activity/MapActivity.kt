@@ -1,5 +1,6 @@
 package com.bestdeveloper.funnyroad.activity
 
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.view.*
@@ -12,6 +13,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import com.bestdeveloper.funnyroad.R
 import com.bestdeveloper.funnyroad.fragments.MapFragment
+import com.bestdeveloper.funnyroad.fragments.MapFragment.Companion
 import com.bestdeveloper.funnyroad.fragments.MapViewModel
 import com.bestdeveloper.funnyroad.fragments.RouteMaker
 import com.bestdeveloper.funnyroad.fragments.RoutesFragment
@@ -69,6 +71,7 @@ class MapActivity : AppCompatActivity(), NavigationBarView.OnItemSelectedListene
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_map)
+        supportFragmentManager.popBackStack()
 
         mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
         bottomNavigationView = findViewById<BottomNavigationView>(R.id.buttonNavView)
@@ -134,6 +137,8 @@ class MapActivity : AppCompatActivity(), NavigationBarView.OnItemSelectedListene
     fun navigationViewToHome(){
         bottomNavigationView.selectedItemId = R.id.map
     }
+
+
 
     companion object {
         private val TAG = MapActivity::class.java.simpleName

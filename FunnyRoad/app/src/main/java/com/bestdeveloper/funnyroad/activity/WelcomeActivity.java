@@ -98,7 +98,10 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onStart();
         if(mAuth.getCurrentUser() != null){
             Log.i("TAG", "user: " + mAuth.getCurrentUser().getUid());
-            startActivity(new Intent(this, MapActivity.class));
+            Intent i = new Intent(this, MapActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(i);
+            finish();
         }
 
     }

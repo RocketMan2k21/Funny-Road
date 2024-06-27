@@ -16,8 +16,8 @@
     android:background="@drawable/card_route_fr">
     
     <com.google.android.material.imageview.ShapeableImageView
-        android:layout_width="130dp"
-        android:layout_height="130dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_margin="24dp"
         android:id="@+id/route_img"
         app:shapeAppearanceOverlay="@style/roundedImageViewRounded"

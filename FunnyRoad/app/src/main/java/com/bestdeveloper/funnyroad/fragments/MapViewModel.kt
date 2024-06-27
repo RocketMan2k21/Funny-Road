@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.bestdeveloper.funnyroad.model.Route
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MapViewModel() : ViewModel() {
@@ -12,6 +13,7 @@ class MapViewModel() : ViewModel() {
     private var _route: MutableLiveData<Route> = MutableLiveData<Route>()
     private var _routes: MutableLiveData<ArrayList<Route>> = MutableLiveData()
     private var _distance : MutableLiveData<Int> = MutableLiveData()
+    private var _cameraPosition: MutableLiveData<CameraPosition> = MutableLiveData()
     private var initialDistance = 1500
 
     init {
@@ -86,6 +88,10 @@ class MapViewModel() : ViewModel() {
     internal var routes:MutableLiveData<ArrayList<Route>>
         get() {return _routes}
         set(value) {_routes = value}
+
+    internal var cameraPosition:MutableLiveData<CameraPosition>
+        get() {return _cameraPosition}
+        set(value) {_cameraPosition = value}
 
     fun getInitialDistanceCount(): MutableLiveData<Int>{
             _distance.value = initialDistance

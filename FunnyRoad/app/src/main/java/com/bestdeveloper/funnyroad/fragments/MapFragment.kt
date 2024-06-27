@@ -15,8 +15,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -28,6 +27,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.libraries.places.api.net.PlacesClient
@@ -41,7 +41,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var locButton: ImageView
     private var mMap: GoogleMap? = null
     private var mapReady = false
-    private var locationPermissionGranted = false
+    private var _locationPermissionGranted = false
     private lateinit var mapViewModel: MapViewModel
 
     // Points generator to make a trip
@@ -52,6 +52,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val placesClient: PlacesClient? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private var isGenerated = false
+    private var cameraPosition: CameraPosition? = null
 
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
@@ -67,13 +68,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-
+        getLocationPermission()
         return inflater.inflate(R.layout.fragment_map, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (savedInstanceState != null) {
+            lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION)
+            cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION)
+        }
         mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
         val mapFragment =
@@ -83,11 +87,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         fabButton = view.findViewById(R.id.fab) as FloatingActionButton
         fabButton!!.setOnClickListener { makeAndSaveRoute() }
         val locationButton = view.findViewById<View>(R.id.location_button)
-        locationButton.setOnClickListener { deviceLocation }
-
-
-
-
+        locationButton.setOnClickListener { getDeviceLocation(true) }
 
     }
 
@@ -110,6 +110,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             distance_edit_txt.setText("" + it)
         })
 
+        val closeBtn = view.findViewById<ImageButton>(R.id.dialog_close_btn)
         dial_add_btn = view.findViewById(R.id.dialog_plus_img_button)
         dial_minus_btn = view.findViewById(R.id.dialog_minus_image_btn)
 
@@ -122,8 +123,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
 
         dialogBuilder.setCancelable(false)
-            .setPositiveButton("Make new") { dialog, which -> }
-            .setNegativeButton("Save") { dialog, which ->
+            .setPositiveButton("Generate") { dialog, which -> }
+            .setNegativeButton(if (isGenerated) "Save" else "Cancel" ) { dialog, which ->
                 if (isGenerated) {
                     saveRoute(currRoute)
                 } else {
@@ -131,6 +132,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 }
             }
         val dialog = dialogBuilder.create()
+        closeBtn.setOnClickListener(){
+            dialog.cancel()
+        }
         dialog.show()
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             if (TextUtils.isEmpty(distance_edit_txt.text.toString())) {
@@ -176,9 +180,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (!mapReady) {
             return
         }
-        locationPermission
         updateLocationUI()
-        deviceLocation
+        getDeviceLocation(false)
         observeViewModel()
     }
 
@@ -207,29 +210,32 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private val deviceLocation: Unit
-        get() {
+    private fun getDeviceLocation(forButton : Boolean){
             try {
-                if (locationPermissionGranted) {
+                if (_locationPermissionGranted) {
                     fusedLocationProviderClient?.lastLocation?.addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             lastKnownLocation = task.result
                             if (lastKnownLocation != null) {
-                                mMap?.animateCamera(
-                                    CameraUpdateFactory.newLatLngZoom(
-                                        LatLng(
-                                            lastKnownLocation!!.latitude,
-                                            lastKnownLocation!!.longitude
-                                        ), DEFAULT_ZOOM.toFloat()
+                                if (!forButton)
+                                    mMap?.moveCamera(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            LatLng(
+                                                lastKnownLocation!!.latitude,
+                                                lastKnownLocation!!.longitude
+                                            ), DEFAULT_ZOOM.toFloat()
+                                        )
                                     )
-                                )
-                            }else {
-                                Log.d(Companion.TAG, "Current location is null. Using defaults.")
-                                Log.e(Companion.TAG, "Exception: %s", task.exception)
-                                mMap?.animateCamera(
-                                    CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat())
-                                )
-                                mMap?.uiSettings?.isMyLocationButtonEnabled = false
+                                else{
+                                    mMap?.animateCamera(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            LatLng(
+                                                lastKnownLocation!!.latitude,
+                                                lastKnownLocation!!.longitude
+                                            ), DEFAULT_ZOOM.toFloat()
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
@@ -239,59 +245,81 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         }
 
-    private val locationPermission: Unit
-        get() {
-            if (ContextCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+    private fun useDefaultLocation() {
+        Toast.makeText(requireContext(), "Current location is unavailable. Please allow location permission.", Toast.LENGTH_LONG).show()
+        Log.d(TAG, "Current location is null. Using defaults.")
+        mMap?.moveCamera(CameraUpdateFactory
+            .newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat()))
+        mMap?.uiSettings?.isMyLocationButtonEnabled = false
+    }
+
+    private fun getLocationPermission() {
+        /*
+         * Request location permission, so that we can get the location of the
+         * device. The result of the permission request is handled by a callback,
+         * onRequestPermissionsResult.
+         */
+        val permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
                 locationPermissionGranted = true
-            } else {
-                ActivityCompat.requestPermissions(
-                    requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
-                )
+                getDeviceLocation(false)
+            }
+            else {
+                useDefaultLocation()
             }
             updateLocationUI()
         }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray
-    ) {
-        locationPermissionGranted = false
-        if (requestCode == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                locationPermissionGranted = true
-            } else {
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-            }
-        }
+        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    private fun updateLocationUI() {
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>,
+                                            grantResults: IntArray) {
+       _locationPermissionGranted = false
+        when (requestCode) {
+            MapFragment.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    _locationPermissionGranted = true
+                }
+            }
+            else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+        updateLocationUI()
+    }
+
+    fun updateLocationUI() {
         if (mMap == null) {
             return
         }
-
             try {
-            if (locationPermissionGranted) {
+            if (_locationPermissionGranted) {
                 mMap!!.isMyLocationEnabled = true
                 mMap!!.uiSettings.isMyLocationButtonEnabled = false
 
             } else {
+                mMap?.isMyLocationEnabled = false
+                mMap?.uiSettings?.isMyLocationButtonEnabled = false
                 lastKnownLocation = null
-                locationPermission
             }
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message!!)
         }
     }
+    internal var locationPermissionGranted : Boolean
+        get() { return _locationPermissionGranted}
+        set(value) {_locationPermissionGranted = value}
 
     companion object {
         private const val DEFAULT_ZOOM = 15
-        private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
+        const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
         const val TAG =  "MapFragment"
+        private const val KEY_CAMERA_POSITION = "camera_position"
+        private const val KEY_LOCATION = "location"
     }
 
 
