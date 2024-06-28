@@ -105,8 +105,12 @@ class MapViewModel() : ViewModel() {
     }
 
     fun onButtonClick(isIncrement: Boolean) {
-        val value = if (isIncrement) 200 else -200
+        val value = if (isIncrement) STEP_COUNT_DISTANCE else -STEP_COUNT_DISTANCE
         updateCounter(value)
+    }
+
+    companion object{
+        private val STEP_COUNT_DISTANCE = 500
     }
 
 

@@ -10,6 +10,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.OnClickListener
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
@@ -20,6 +21,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bestdeveloper.funnyroad.R
+import com.bestdeveloper.funnyroad.databinding.FragmentMapBinding
+import com.bestdeveloper.funnyroad.databinding.MakeRouteDigBinding
 import com.bestdeveloper.funnyroad.model.Route
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -37,8 +40,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
-    private lateinit var distance_edit_txt : EditText
-    private lateinit var locButton: ImageView
     private var mMap: GoogleMap? = null
     private var mapReady = false
     private var _locationPermissionGranted = false
@@ -49,7 +50,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val defaultLocation = LatLng(-33.8523341, 151.2106085)
 
     // the entry point to the Places API
-    private val placesClient: PlacesClient? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private var isGenerated = false
     private var cameraPosition: CameraPosition? = null
@@ -60,9 +60,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var fabButton: FloatingActionButton? = null
     private lateinit var currRoute: Route
 
-    // Button on dialogue view
-    private lateinit var dial_minus_btn : ImageButton
-    private lateinit var dial_add_btn: ImageButton
+    private  var _dialogueBinding: MakeRouteDigBinding? = null
+    private val dialogueBinding get() = _dialogueBinding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -70,7 +69,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         getLocationPermission()
         return inflater.inflate(R.layout.fragment_map, container, false)
+
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -88,7 +89,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         fabButton!!.setOnClickListener { makeAndSaveRoute() }
         val locationButton = view.findViewById<View>(R.id.location_button)
         locationButton.setOnClickListener { getDeviceLocation(true) }
+    }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _dialogueBinding = null
     }
 
     private fun observeViewModel() {
@@ -99,53 +104,51 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private fun makeAndSaveRoute() {
         val layoutInflater = LayoutInflater.from(context)
-        val view = layoutInflater.inflate(R.layout.make_route_dig, null)
+        _dialogueBinding = MakeRouteDigBinding.inflate(layoutInflater)
 
         val dialogBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.MaterialAlertDialog_Rounded)
-        dialogBuilder.setView(view)
+        dialogBuilder.setView(dialogueBinding.root)
 
-        distance_edit_txt = view.findViewById<EditText>(R.id.dialog_distance_edit_txt)
+        var dialogDistanceEditTxt = dialogueBinding.dialogDistanceEditTxt
         val initialDistanceCount = mapViewModel.getInitialDistanceCount()
         initialDistanceCount.observe(viewLifecycleOwner, Observer {
-            distance_edit_txt.setText("" + it)
+            dialogDistanceEditTxt.setText("" + it)
         })
 
-        val closeBtn = view.findViewById<ImageButton>(R.id.dialog_close_btn)
-        dial_add_btn = view.findViewById(R.id.dialog_plus_img_button)
-        dial_minus_btn = view.findViewById(R.id.dialog_minus_image_btn)
 
-        dial_add_btn.setOnClickListener(View.OnClickListener {
+        dialogueBinding.dialogPlusImgButton.setOnClickListener(View.OnClickListener {
             mapViewModel.onButtonClick(true)
         })
-        dial_minus_btn.setOnClickListener(View.OnClickListener {
+        dialogueBinding.dialogMinusImageBtn.setOnClickListener(View.OnClickListener {
             mapViewModel.onButtonClick(false)
         })
 
+        val dialog = dialogBuilder.create()
 
-        dialogBuilder.setCancelable(false)
-            .setPositiveButton("Generate") { dialog, which -> }
-            .setNegativeButton(if (isGenerated) "Save" else "Cancel" ) { dialog, which ->
+        dialogueBinding.dialogSaveOrCancelBtn.apply {
+            text = if (isGenerated) "Save" else "Cancel"
+            setOnClickListener {
                 if (isGenerated) {
                     saveRoute(currRoute)
                 } else {
                     dialog.cancel()
                 }
             }
-        val dialog = dialogBuilder.create()
-        closeBtn.setOnClickListener(){
+        }
+        dialogueBinding.dialogCloseBtn.setOnClickListener{
             dialog.cancel()
         }
         dialog.show()
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            if (TextUtils.isEmpty(distance_edit_txt.text.toString())) {
+        dialogueBinding.dialogGenerateBtn.setOnClickListener {
+            if (TextUtils.isEmpty(dialogDistanceEditTxt.text.toString())) {
                 Toast.makeText(context, "Please enter a distance", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (distance_edit_txt.text.toString().toInt() < 200) {
+            if (dialogDistanceEditTxt.text.toString().toInt() < 200) {
                 Toast.makeText(context, "Not valid distance", Toast.LENGTH_SHORT).show()
             } else {
                 dialog.dismiss()
-                makeNewRoute(distance_edit_txt.text.toString().toInt().toDouble())
+                makeNewRoute(dialogDistanceEditTxt.text.toString().toInt().toDouble())
             }
         }
     }
@@ -232,7 +235,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                             LatLng(
                                                 lastKnownLocation!!.latitude,
                                                 lastKnownLocation!!.longitude
-                                            ), DEFAULT_ZOOM.toFloat()
+                                            ), mMap?.cameraPosition!!.zoom
                                         )
                                     )
                                 }
