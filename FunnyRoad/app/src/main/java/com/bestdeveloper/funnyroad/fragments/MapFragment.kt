@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -63,12 +64,19 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private  var _dialogueBinding: MakeRouteDigBinding? = null
     private val dialogueBinding get() = _dialogueBinding!!
 
+    private var _mapBinding :  FragmentMapBinding? = null
+    private val mapBinding get() = _mapBinding!!
+
+    // Progress bar
+    private lateinit var  mapProgressBar: ProgressBar
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         getLocationPermission()
-        return inflater.inflate(R.layout.fragment_map, container, false)
+        _mapBinding = FragmentMapBinding.inflate(inflater, container, false)
+        return mapBinding.root
 
     }
 
@@ -81,6 +89,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        mapProgressBar = mapBinding.mapFrDeterminateBar
+        mapProgressBar.visibility = View.VISIBLE
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment?.getMapAsync(this)
@@ -89,6 +99,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         fabButton!!.setOnClickListener { makeAndSaveRoute() }
         val locationButton = view.findViewById<View>(R.id.location_button)
         locationButton.setOnClickListener { getDeviceLocation(true) }
+
+        //Progress bar
+
     }
 
     override fun onDestroyView() {
@@ -130,6 +143,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             setOnClickListener {
                 if (isGenerated) {
                     saveRoute(currRoute)
+                    dialog.cancel()
                 } else {
                     dialog.cancel()
                 }
@@ -169,6 +183,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mapReady = true
+        mapProgressBar.visibility = View.GONE
         val nightModeFlags = requireContext().resources.configuration.uiMode and
                 Configuration.UI_MODE_NIGHT_MASK
         when (nightModeFlags) {

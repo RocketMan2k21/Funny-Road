@@ -124,6 +124,8 @@ class RoutesFragment : Fragment() {
         override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
             val route = routes.get(position)
             holder.binding.route = route
+            holder.binding.progressBar = holder.binding.routesFrDeterminateBar
+            holder.binding.routesFrDeterminateBar.visibility = View.VISIBLE
             holder.itemView.setOnClickListener(View.OnClickListener {
                 mapViewModel.route.value = route
                 val mapActivity = activity as MapActivity

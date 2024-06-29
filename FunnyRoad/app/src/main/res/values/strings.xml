@@ -109,4 +109,6 @@
     <string name="choose_parameters">Choose parameters</string>
     <string name="_1000">1000</string>
     <string name="saved_routes">Saved Routes</string>
+    <string name="logging_in">Logging in</string>
+    <string name="signing_up">Signing up</string>
 </resources>
