@@ -111,4 +111,11 @@
     <string name="saved_routes">Saved Routes</string>
     <string name="logging_in">Logging in</string>
     <string name="signing_up">Signing up</string>
+    <string name="incorrect_email">Incorrect email</string>
+    <string name="incorrect_password">Incorrect password</string>
+    <string name="incorrect_credentials">Wrong credentials</string>
+    <string name="short_password">Passwords should be at least 8 characters long </string>
+    <string name="please_enter_your_email">Please enter your email</string>
+    <string name="please_enter_your_password">Please enter your password</string>
+    <string name="please_enter_correct_email">Please enter correct email</string>
 </resources>

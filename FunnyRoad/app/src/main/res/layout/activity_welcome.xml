@@ -24,11 +24,16 @@
             android:textSize="32sp"
             android:textStyle="bold" />
 
+
+
+
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             >
+
 
             <EditText
                 android:id="@+id/loginEmail"
@@ -39,33 +44,44 @@
                 android:autofillHints="emailAddress"
                 android:drawableStart="@drawable/custom_email_ic"
                 android:drawablePadding="12dp"
+                android:maxLength="40"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:background="@drawable/custom_welcome_edit"
                  />
 
 
-            <EditText
-                android:id="@+id/loginPassword"
+
+                <EditText
+
+                    android:id="@+id/loginPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:autofillHints="password"
+                    android:hint="@string/password"
+                    android:maxLength="30"
+                    android:layout_marginTop="12dp"
+                    android:inputType="textPassword"
+                    android:drawablePadding="12dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:drawableStart="@drawable/custom_lock_ic"
+                    android:background="@drawable/custom_welcome_edit"
+                    />
+
+            <TextView
+
+                android:id="@+id/inc_pass_string"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:autofillHints="password"
-                android:layout_marginTop="12dp"
-                android:hint="@string/password"
-                android:inputType="textPassword"
-                android:drawablePadding="12dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:drawableStart="@drawable/custom_lock_ic"
-                android:background="@drawable/custom_welcome_edit"
+                android:layout_height="wrap_content"
+                android:textColor="@color/red"
                 />
             <Button
                 android:id="@+id/logInBtn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/log_in"
-                android:layout_marginTop="25dp"
-
+                android:layout_marginTop="24dp"
                 android:textSize="16sp"
                 android:background="@drawable/custom_log_in_button" />
 
@@ -121,6 +137,7 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
+            android:indeterminateTint="@color/purplerious"
              />
         <TextView
             android:layout_width="wrap_content"

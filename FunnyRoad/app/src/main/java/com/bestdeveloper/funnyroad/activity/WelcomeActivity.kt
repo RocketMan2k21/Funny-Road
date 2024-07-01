@@ -1,15 +1,21 @@
 package com.bestdeveloper.funnyroad.activity
 
+import EditTextUtils
+import EditTextUtils.highlightFieldAndSetError
+import EditTextUtils.setDefaultStrokeOnChangedEditText
 import android.content.ContentValues
 import android.content.Intent
 import android.os.Bundle
-import android.text.TextUtils
 import android.util.Log
 import android.view.View
+import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.widget.addTextChangedListener
+import com.bestdeveloper.funnyroad.R
 import com.bestdeveloper.funnyroad.databinding.ActivityWelcomeBinding
 import com.google.firebase.auth.FirebaseAuth
 
@@ -23,6 +29,8 @@ class WelcomeActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var greyBackground: View
 
+    private val navigator = ViewNavigator()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,62 +38,104 @@ class WelcomeActivity : AppCompatActivity() {
         setContentView(binding.root)
         mAuth = FirebaseAuth.getInstance()
 
-        // Set up click listeners using binding
-        binding.logInBtn.setOnClickListener {
-            val email = binding.loginEmail.text.toString().trim()
-            val password = binding.loginPassword.text.toString().trim()
-            signIn(email, password)
-        }
-
-        binding.signUpTxtBtn.setOnClickListener {
-            val intent = Intent(this@WelcomeActivity, SignUpActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Progress bar
         progressBar = binding.logInPrBar
         greyBackground = binding.lowTrBackground
         load_txt = binding.loggingInTextBar
-
         hideLogInProgressBar()
+        
+        setDefaultStrokeOnChangedEditText(applicationContext, binding.loginEmail)
+        setDefaultStrokeOnChangedEditText(applicationContext, binding.loginPassword)
+
+        // Set up click listeners using binding
+        binding.logInBtn.setOnClickListener {
+            val email = EditTextUtils.trimInput(binding.loginEmail)
+            val password = EditTextUtils.trimInput(binding.loginPassword)
+            validate(email, password, binding.incPassString)
+        }
+
+        binding.signUpTxtBtn.setOnClickListener {
+            navigator.navigateToSignUpActivity(this)
+        }
+
     }
 
+    private fun validate(email: String, password: String, errorText: TextView) {
+        CredentialValidator().validate(email, password, object : ValidationInterface{
+            override fun emailOnEmptyResult() {
+                highlightFieldAndSetError(applicationContext, binding.loginEmail, errorText, getString(R.string.please_enter_your_email))
+            }
+
+            override fun passwordOnEmptyResult() {
+                highlightFieldAndSetError(applicationContext, binding.loginPassword, errorText, getString(R.string.please_enter_your_password))
+            }
+
+            override fun onBothEmpty() {
+                highlightFieldAndSetError(applicationContext, binding.loginEmail, errorText, "")
+                highlightFieldAndSetError(applicationContext, binding.loginPassword, errorText, "")
+            }
+
+            override fun emailOnInvalidResult() {
+                highlightFieldAndSetError(applicationContext, binding.loginEmail, errorText,  getString(R.string.incorrect_email))
+            }
+
+            override fun passwordOnInvalidResult() {
+               highlightFieldAndSetError(applicationContext, binding.loginPassword, errorText, getString(R.string.short_password))
+            }
 
 
-    private fun signIn(email: String, password: String) {
-        showLogInProgressBar()
-        if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)) {
+
+            override fun OnSuccessResult() {
+                signIn(email, password, object : OnSignUpResult{
+                    override fun onSuccess() {
+                        onLogInSuccess()
+                    }
+
+                    override fun onFailure() {
+                        onLogInFailure()
+                    }
+                })
+            }
+        })
+
+    }
+
+    private fun signIn(email: String, password: String, onSignUpResult: OnSignUpResult) {
+
             mAuth!!.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         // Sign in success, update UI with the signed-in user's information
-                        hideLogInProgressBar()
-                        Log.d(ContentValues.TAG, "signInWithEmail:success")
-                        val user = mAuth!!.currentUser
-                        startActivity(Intent(this@WelcomeActivity, MapActivity::class.java)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-                        finish()
+                        onSignUpResult.onSuccess()
                     } else {
                         // If sign in fails, display a message to the user.
-                        hideLogInProgressBar()
-                        Log.w(ContentValues.TAG, "signInWithEmail:failure", task.exception)
-                        Toast.makeText(
-                            this@WelcomeActivity, "Authentication failed.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        onSignUpResult.onFailure()
                     }
                 }
         }
+
+    private fun onLogInSuccess(){
+        hideLogInProgressBar()
+        binding.incPassString.text = ""
+        Log.d(ContentValues.TAG, "signInWithEmail:success")
+        navigator.navigateToMapActivity(this)
     }
+
+    private fun onLogInFailure(){
+        hideLogInProgressBar()
+        binding.incPassString.text = resources.getString(R.string.incorrect_credentials)
+        Log.w(ContentValues.TAG, "signInWithEmail:failure")
+        Toast.makeText(
+            this@WelcomeActivity, "Authentication failed.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
 
     override fun onStart() {
         super.onStart()
         if (mAuth!!.currentUser == null) {
             Log.i("TAG", "user: " + mAuth!!.currentUser!!.uid)
-            val intent = Intent(this, MapActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            startActivity(intent)
-            finish()
+            navigator.navigateToMapActivity(this)
         }
     }
 
