@@ -43,7 +43,7 @@ class WelcomeActivity : AppCompatActivity() {
         progressBar = binding.logInPrBar
         greyBackground = binding.lowTrBackground
         load_txt = binding.loggingInTextBar
-        hideLogInProgressBar()
+        switchBars(View.GONE)
         
         setDefaultStrokeOnChangedEditText(applicationContext, binding.loginEmail)
         setDefaultStrokeOnChangedEditText(applicationContext, binding.loginPassword)
@@ -87,6 +87,7 @@ class WelcomeActivity : AppCompatActivity() {
 
 
             override fun OnSuccessResult() {
+                switchBars(View.VISIBLE)
                 viewModel.signIn(email, password, object : OnSignUpResult{
                     override fun onSuccess() {
                         onLogInSuccess()
@@ -103,14 +104,14 @@ class WelcomeActivity : AppCompatActivity() {
 
 
     private fun onLogInSuccess(){
-        hideLogInProgressBar()
+        switchBars(View.GONE)
         binding.incPassString.text = ""
         Log.d(ContentValues.TAG, "signInWithEmail:success")
         navigator.navigateToMapActivity(this)
     }
 
     private fun onLogInFailure(){
-        hideLogInProgressBar()
+        switchBars(View.GONE)
         binding.incPassString.text = resources.getString(R.string.incorrect_credentials)
         Log.w(ContentValues.TAG, "signInWithEmail:failure")
         Toast.makeText(
@@ -128,15 +129,9 @@ class WelcomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun hideLogInProgressBar() {
-        load_txt.visibility = View.GONE
-        progressBar.visibility = View.GONE
-        greyBackground.visibility = View.GONE
-    }
-
-    private fun showLogInProgressBar() {
-        load_txt.visibility = View.VISIBLE
-        progressBar.visibility = View.VISIBLE
-        greyBackground.visibility = View.VISIBLE
+    private fun switchBars(viewState : Int) {
+        load_txt.visibility = viewState
+        progressBar.visibility = viewState
+        greyBackground.visibility = viewState
     }
 }
