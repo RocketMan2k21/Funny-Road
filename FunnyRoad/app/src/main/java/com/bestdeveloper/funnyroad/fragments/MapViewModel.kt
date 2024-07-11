@@ -1,23 +1,22 @@
 package com.bestdeveloper.funnyroad.fragments
 
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.bestdeveloper.funnyroad.db.UserRepository
 import com.bestdeveloper.funnyroad.model.Route
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.firebase.firestore.FirebaseFirestore
 
-class MapViewModel() : ViewModel() {
-    private var TAG : String = MapViewModel::class.java.simpleName
-    private var firestore: FirebaseFirestore
+class MapViewModel : ViewModel() {
+    private var tag : String = MapViewModel::class.java.simpleName
+    private var firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
     private var _route: MutableLiveData<Route> = MutableLiveData<Route>()
     private var _routes: MutableLiveData<ArrayList<Route>> = MutableLiveData()
     private var _distance : MutableLiveData<Int> = MutableLiveData()
     private var initialDistance = 1500
+    private var userRepository = UserRepository.getInstance()
 
     init {
-        firestore = FirebaseFirestore.getInstance()
         listenToRoutes()
     }
 
@@ -25,13 +24,15 @@ class MapViewModel() : ViewModel() {
     fun saveRoute(
         route: Route
     ) {
+        val userDoc =
+            firestore.collection("users").document(userRepository.getCurrentUser()!!.uid)
         val document =
-            if (route.routeId != null && !route.routeId.isEmpty()) {
+            if (route.routeId.isNotEmpty()) {
                 // updating existing
-                firestore.collection("routes").document(route.routeId)
+                    userDoc.collection("routes").document(route.routeId)
             } else {
                 // create new
-                firestore.collection("routes").document()
+                userDoc.collection("routes").document()
             }
         route.routeId = document.id
         val set = document.set(route)
@@ -44,10 +45,11 @@ class MapViewModel() : ViewModel() {
     }
 
     private fun listenToRoutes(){
-        firestore.collection("routes").addSnapshotListener {
+        firestore.collection("users").document(userRepository.getCurrentUser()!!.uid)
+            .collection("routes").addSnapshotListener {
             value, error ->
             if(error != null){
-                Log.w(TAG, "Listen Failed", error)
+                Log.w(tag, "Listen Failed", error)
                 return@addSnapshotListener
             }
 
@@ -58,7 +60,7 @@ class MapViewModel() : ViewModel() {
                     val route = it.toObject(Route::class.java)
                     if(route != null){
                         route.routeId = it.id
-                        Log.d(TAG, "Route: ${route.toString()}")
+                        Log.d(tag, "Route: $route")
                         allRoutes.add(route)
                     }
                 }
@@ -69,15 +71,15 @@ class MapViewModel() : ViewModel() {
     }
 
     internal fun deleteRoute(route: Route) {
-        if (route.routeId != null) {
-            val document = firestore.collection("routes").document(route.routeId)
-            val task = document.delete();
-            task.addOnSuccessListener {
-                Log.e(TAG, "Route ${route.routeId} Deleted")
-            }
-            task.addOnFailureListener {
-                Log.e(TAG, "Route ${route.routeId} Failed to delete.  Message: ${it.message}")
-            }
+        val userDoc =
+            firestore.collection("users").document(userRepository.getCurrentUser()!!.uid)
+        val document = userDoc.collection("routes").document(route.routeId)
+        val task = document.delete()
+        task.addOnSuccessListener {
+            Log.e(tag, "Route ${route.routeId} Deleted")
+        }
+        task.addOnFailureListener {
+            Log.e(tag, "Route ${route.routeId} Failed to delete.  Message: ${it.message}")
         }
     }
 
@@ -94,10 +96,10 @@ class MapViewModel() : ViewModel() {
             return _distance
     }
 
-    fun updateCounter(value: Int) {
-        val new_value = (_distance.value ?: initialDistance) + value
-        if (new_value > 0)
-            _distance.value = new_value
+    private fun updateCounter(value: Int) {
+        val newValue = (_distance.value ?: initialDistance) + value
+        if (newValue > 0)
+            _distance.value = newValue
     }
 
     fun onButtonClick(isIncrement: Boolean) {
@@ -106,7 +108,7 @@ class MapViewModel() : ViewModel() {
     }
 
     companion object{
-        private val STEP_COUNT_DISTANCE = 500
+        private const val STEP_COUNT_DISTANCE = 500
     }
 
 
