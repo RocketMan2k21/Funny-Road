@@ -4,24 +4,20 @@ import EditTextUtils
 import EditTextUtils.highlightFieldAndSetError
 import EditTextUtils.setDefaultStrokeOnChangedEditText
 import android.content.ContentValues
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.ViewModelProvider
 import com.bestdeveloper.funnyroad.R
 import com.bestdeveloper.funnyroad.databinding.ActivityWelcomeBinding
-import com.google.firebase.auth.FirebaseAuth
 
 class WelcomeActivity : AppCompatActivity() {
     private lateinit var load_txt: TextView
-    private var mAuth: FirebaseAuth? = null
+    private lateinit var mAuth: FirebaseAuthenticator
 
     // Binding
     private lateinit var binding: ActivityWelcomeBinding
@@ -31,13 +27,19 @@ class WelcomeActivity : AppCompatActivity() {
 
     private val navigator = ViewNavigator()
 
+    // view model
+    private lateinit var viewModel : WelcomeActivityViewModel
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityWelcomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        mAuth = FirebaseAuth.getInstance()
 
+        viewModel = ViewModelProvider(this).get(WelcomeActivityViewModel::class.java)
+
+        mAuth = FirebaseAuthenticator()
         progressBar = binding.logInPrBar
         greyBackground = binding.lowTrBackground
         load_txt = binding.loggingInTextBar
@@ -85,7 +87,7 @@ class WelcomeActivity : AppCompatActivity() {
 
 
             override fun OnSuccessResult() {
-                signIn(email, password, object : OnSignUpResult{
+                viewModel.signIn(email, password, object : OnSignUpResult{
                     override fun onSuccess() {
                         onLogInSuccess()
                     }
@@ -99,19 +101,6 @@ class WelcomeActivity : AppCompatActivity() {
 
     }
 
-    private fun signIn(email: String, password: String, onSignUpResult: OnSignUpResult) {
-
-            mAuth!!.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        onSignUpResult.onSuccess()
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        onSignUpResult.onFailure()
-                    }
-                }
-        }
 
     private fun onLogInSuccess(){
         hideLogInProgressBar()
@@ -133,8 +122,8 @@ class WelcomeActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (mAuth!!.currentUser == null) {
-            Log.i("TAG", "user: " + mAuth!!.currentUser!!.uid)
+        if (viewModel.getCurrentUser() != null) {
+            Log.i("TAG", "user: " + viewModel.getCurrentUser()!!.uid)
             navigator.navigateToMapActivity(this)
         }
     }

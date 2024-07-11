@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.bestdeveloper.funnyroad.R
 import com.bestdeveloper.funnyroad.databinding.ActivitySignUpBinding
 import com.google.firebase.auth.FirebaseAuth
@@ -26,11 +27,13 @@ class SignUpActivity : AppCompatActivity() {
     private lateinit var greyBackground: View
 
     // Firebase auth state
-    private var mAuth: FirebaseAuth? = null
+    private lateinit var viewModel: WelcomeActivityViewModel
     private lateinit var binding: ActivitySignUpBinding
 
     // Navigator
     private val navigator = ViewNavigator()
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,8 +41,8 @@ class SignUpActivity : AppCompatActivity() {
         binding = ActivitySignUpBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        mAuth = FirebaseAuth.getInstance()
 
+        viewModel = ViewModelProvider(this).get(WelcomeActivityViewModel::class.java)
         // Progress bar
         progressBar = binding.logInPrBar
         greyBackground = binding.lowTrBackground
@@ -86,10 +89,10 @@ class SignUpActivity : AppCompatActivity() {
                 highlightFieldAndSetError(applicationContext, userPassword, errorText, "")
             }
 
-            override fun OnSuccessResult() {
+            override  fun OnSuccessResult() {
                 switchLogInProgressBar(View.VISIBLE)
                 errorText.text = ""
-                createUser(email, password, object : OnSignUpResult{
+                viewModel.createUser(email, password, object : OnSignUpResult{
                     override fun onSuccess() {
                         onSignUpSuccess()
                     }
@@ -100,17 +103,6 @@ class SignUpActivity : AppCompatActivity() {
                 })
             }
         })
-    }
-
-    private fun createUser(email: String, password: String, onSignUpResult: OnSignUpResult) {
-        mAuth!!.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onSignUpResult.onSuccess()
-                } else {
-                    onSignUpResult.onFailure()
-                }
-            }
     }
 
     private fun switchLogInProgressBar(optionView : Int) {
