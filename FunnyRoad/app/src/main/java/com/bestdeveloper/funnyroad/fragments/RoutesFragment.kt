@@ -47,23 +47,31 @@ class RoutesFragment : Fragment() {
             mapViewModel = ViewModelProvider(it).get(MapViewModel::class.java)
         }
 
+        loadRoutesList()
+
         noSavedRoutesTxt = requireView().findViewById(R.id.route_frag_noSavedRoutes_textView)
 
-        if(routes.isEmpty())
-            displayAllRoutes()
+        //Handling swipe
 
-        adapter = RoutesAdapter(routes)
-        recyclerView = view.findViewById(R.id.recycleView_routeFrag)
-        recyclerView.setHasFixedSize(true)
-        recyclerView.layoutManager = LinearLayoutManager(context)
-        recyclerView.adapter = adapter
+}
+    private fun deleteRoute(route: Route, pos: Int) {
+        routes.removeAt(pos)
+        mapViewModel.deleteRoute(route)
+        adapter.notifyDataSetChanged()
+    }
 
+    private fun loadRoutesList(){
         mapViewModel.routes.observe(viewLifecycleOwner, Observer {
             routes = it
-            adapter.notifyDataSetChanged()
+            loadRecycleView()
         })
+    }
 
-        //Handling swipe
+    private fun loadRecycleView(){
+        recyclerView = requireView().findViewById(R.id.recycleView_routeFrag)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.setHasFixedSize(true)
+
         ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT){
             override fun onMove(
                 recyclerView: RecyclerView,
@@ -77,11 +85,10 @@ class RoutesFragment : Fragment() {
                 deleteRoute(route, viewHolder.adapterPosition)
             }
         }).attachToRecyclerView(recyclerView)
-}
-    private fun deleteRoute(route: Route, pos: Int) {
-        routes.removeAt(pos)
-        mapViewModel.deleteRoute(route)
-        adapter.notifyDataSetChanged()
+
+        adapter = RoutesAdapter()
+        recyclerView.adapter = adapter
+        adapter.setRoutes(routes)
     }
 
     private fun displayAllRoutes(){
@@ -103,9 +110,8 @@ class RoutesFragment : Fragment() {
 
 
     inner class RoutesAdapter(
-        private var routes: ArrayList<Route>
     ): RecyclerView.Adapter<RoutesFragment.MyViewHolder>() {
-
+        private var routes: ArrayList<Route>? = null
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
             val binding: RecycleViewRoutesBinding = DataBindingUtil.inflate(
                 LayoutInflater.from(parent.context),
@@ -118,11 +124,11 @@ class RoutesFragment : Fragment() {
         }
 
         override fun getItemCount(): Int {
-            return routes.size;
+            return routes!!.size;
         }
 
         override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-            val route = routes.get(position)
+            val route = routes?.get(position)
             holder.binding.route = route
             holder.binding.progressBar = holder.binding.routesFrDeterminateBar
             holder.binding.routesFrDeterminateBar.visibility = View.VISIBLE
@@ -133,6 +139,11 @@ class RoutesFragment : Fragment() {
                 mapActivity.navigationViewToHome()
 
             })
+        }
+
+        fun setRoutes(routes: ArrayList<Route>){
+            this.routes = routes
+            notifyDataSetChanged()
         }
     }
 

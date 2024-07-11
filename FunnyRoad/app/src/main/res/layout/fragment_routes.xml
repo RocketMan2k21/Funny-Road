@@ -26,7 +26,6 @@
        android:layout_gravity="center"
        android:text="@string/no_saved_routes"
        android:textSize="36sp"
-       android:textStyle="bold"
        android:textAlignment="center"
        android:visibility="gone"
       android:id="@+id/route_frag_noSavedRoutes_textView"/>

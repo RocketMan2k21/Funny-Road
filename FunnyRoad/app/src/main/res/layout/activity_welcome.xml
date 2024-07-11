@@ -21,8 +21,7 @@
             android:text="@string/welcome_to_funny_road"
             android:textAlignment="center"
             android:textColor="@color/black"
-            android:textSize="32sp"
-            android:textStyle="bold" />
+            android:textSize="32sp" />
 
 
 
@@ -115,7 +114,7 @@
                 android:textColor="@color/purple_200"
                 android:textSize="20sp"
                 android:clickable="true"
-                android:textStyle="bold"
+
                 />
 
         </LinearLayout>
