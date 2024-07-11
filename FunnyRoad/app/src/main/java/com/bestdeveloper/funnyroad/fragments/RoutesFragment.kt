@@ -89,23 +89,10 @@ class RoutesFragment : Fragment() {
         adapter = RoutesAdapter()
         recyclerView.adapter = adapter
         adapter.setRoutes(routes)
-    }
 
-    private fun displayAllRoutes(){
-        val executor = Executors.newSingleThreadExecutor()
-        val handler = Handler(Looper.getMainLooper())
-
-        executor.execute(Runnable {
-            routes.addAll(mapViewModel.routes.value as ArrayList)
-        })
-
-        handler.post(Runnable {
-            if (routes.isEmpty()){
-                noSavedRoutesTxt.visibility = TextView.VISIBLE
-            }
-            adapter.notifyDataSetChanged()
-        })
-
+        if (routes.isEmpty()){
+            noSavedRoutesTxt.visibility = TextView.VISIBLE
+        }
     }
 
 

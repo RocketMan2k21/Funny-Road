@@ -78,35 +78,17 @@ class FunnyPolyline(
         return arrowsOnPointsList
     }
 
-    fun updateArrowsOnPolyline(zoom: Float, points:List<LatLng>) {
-        // Видаліть старі стрілки (якщо є)
-        removeOldArrows()
-
-        // Отримуємо місця для нових стрілок
-        val arrowsPlacesOnPolyline = getArrowsPlacesOnPolyline(points, zoom)
-
-        // Додаємо нові стрілки на полілінію
-        for (place in arrowsPlacesOnPolyline) {
-            drawPolylineWithArrowEndcap(place.key , place.value)
-        }
-    }
-
     fun getNumberOfArrows(zoom: Float, points: List<LatLng>): Int {
         val koef: Int = when {
-            zoom > 20 -> 6
-            zoom > 18 || zoom < 20 -> 8
-            zoom > 15 || zoom < 18 -> 10
-            zoom > 12 || zoom < 15 -> 12
+            zoom > 20 -> 12
+            zoom > 18 || zoom < 20 -> 16
+            zoom > 15 || zoom < 18 -> 20
+            zoom > 12 || zoom < 15 -> 24
             else -> 50
         }
         return points.size / koef
     }
 
-    private fun removeOldArrows() {
-        for (arrow in arrows) {
-           arrow.remove()
-        }
-    }
 
 
 }
