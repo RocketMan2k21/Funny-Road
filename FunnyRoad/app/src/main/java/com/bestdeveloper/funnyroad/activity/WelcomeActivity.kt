@@ -123,7 +123,7 @@ class WelcomeActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (viewModel.getCurrentUser() == null) {
+        if (viewModel.getCurrentUser() != null) {
             Log.i("TAG", "user: " + viewModel.getCurrentUser()!!.uid)
             navigator.navigateToMapActivity(this)
         }
