@@ -15,7 +15,7 @@ Implemented:
   * MVVM
   * Retrofit
   * Firebase, Firebase Auth
-  * Google SDK
+  * Google map SDK
   * Fragments
 
 <img src="FunnyRoad/img/1720689832404.jpg" alt="drawing" width="300"/>
